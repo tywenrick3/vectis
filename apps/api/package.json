@@ -1,0 +1,28 @@
+{
+  "name": "@vectis/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "@hono/node-server": "^1.13.0",
+    "dotenv": "^16.4.0",
+    "@vectis/shared": "workspace:*",
+    "@vectis/ideation": "workspace:*",
+    "@vectis/voice": "workspace:*",
+    "@vectis/video": "workspace:*",
+    "@vectis/publisher": "workspace:*",
+    "@vectis/analytics": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}
