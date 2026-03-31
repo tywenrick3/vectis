@@ -7,8 +7,8 @@ import {
   useVideoConfig,
   interpolate,
 } from "remotion";
-import type { CompositionProps } from "./Root.js";
-import { CaptionOverlay } from "./CaptionOverlay.js";
+import type { CompositionProps } from "./Root";
+import { CaptionOverlay } from "./CaptionOverlay";
 
 const CAPTION_STYLE = {
   activeColor: "#00d4ff",

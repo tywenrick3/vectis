@@ -109,18 +109,22 @@ async function assembleVariant(params: AssembleVariantParams): Promise<AssemblyJ
   const env = getEnv();
   const compositionId = video.composition_id;
 
-  // Create assembly job
+  // Step 1: Transcribe first (deduped across variants) — must exist before job insert due to FK
+  log.info({ hookVariantIndex }, "Transcribing");
+  const transcription = await transcribe(voiceAsset);
+
+  // Create assembly job with real transcription_id
   const { data: job, error: jobError } = await db
     .from("assembly_jobs")
     .insert({
       script_id: script.id,
       video_id: video.id,
       voice_asset_id: voiceAsset.id,
-      transcription_id: "00000000-0000-0000-0000-000000000000", // placeholder, updated below
+      transcription_id: transcription.id,
       hook_variant_index: hookVariantIndex,
       hook_text: hookText,
       composition_id: compositionId,
-      status: "transcribing",
+      status: "rendering",
     })
     .select()
     .single();
@@ -131,14 +135,6 @@ async function assembleVariant(params: AssembleVariantParams): Promise<AssemblyJ
   const tempFiles: string[] = [];
 
   try {
-    // Step 1: Transcribe (deduped across variants)
-    log.info({ jobId, hookVariantIndex }, "Transcribing");
-    const transcription = await transcribe(voiceAsset);
-
-    await db
-      .from("assembly_jobs")
-      .update({ transcription_id: transcription.id, status: "rendering" })
-      .eq("id", jobId);
 
     // Step 2: Render with captions + hook override
     log.info({ jobId, hookVariantIndex }, "Rendering with captions");

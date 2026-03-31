@@ -34,6 +34,9 @@ oauthRoute.get("/tiktok/callback", async (c) => {
 // TikTok OAuth initiation (redirect to TikTok)
 oauthRoute.get("/tiktok", (c) => {
   const env = getEnv();
+  if (!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_REDIRECT_URI) {
+    return c.json({ error: "TikTok credentials not configured. Set TIKTOK_CLIENT_KEY and TIKTOK_REDIRECT_URI in .env" }, 501);
+  }
   const params = new URLSearchParams({
     client_key: env.TIKTOK_CLIENT_KEY,
     redirect_uri: env.TIKTOK_REDIRECT_URI,

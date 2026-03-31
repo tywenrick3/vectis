@@ -13,9 +13,11 @@ const validEnv: Record<string, string> = {
   R2_SECRET_ACCESS_KEY: "test-r2-secret-key",
   R2_BUCKET_NAME: "test-bucket",
   R2_PUBLIC_URL: "https://r2.example.com",
-  TIKTOK_CLIENT_KEY: "test-tiktok-key",
-  TIKTOK_CLIENT_SECRET: "test-tiktok-secret",
-  TIKTOK_REDIRECT_URI: "https://redirect.example.com/callback",
+  YOUTUBE_CLIENT_ID: "test-youtube-client-id",
+  YOUTUBE_CLIENT_SECRET: "test-youtube-client-secret",
+  YOUTUBE_REDIRECT_URI: "https://redirect.example.com/youtube/callback",
+  TAVILY_API_KEY: "test-tavily-key",
+  OPENAI_API_KEY: "test-openai-key",
 };
 
 describe("config", () => {
@@ -52,9 +54,14 @@ describe("config", () => {
     expect(env.R2_SECRET_ACCESS_KEY).toBe("test-r2-secret-key");
     expect(env.R2_BUCKET_NAME).toBe("test-bucket");
     expect(env.R2_PUBLIC_URL).toBe("https://r2.example.com");
-    expect(env.TIKTOK_CLIENT_KEY).toBe("test-tiktok-key");
-    expect(env.TIKTOK_CLIENT_SECRET).toBe("test-tiktok-secret");
-    expect(env.TIKTOK_REDIRECT_URI).toBe("https://redirect.example.com/callback");
+    expect(env.YOUTUBE_CLIENT_ID).toBe("test-youtube-client-id");
+    expect(env.YOUTUBE_CLIENT_SECRET).toBe("test-youtube-client-secret");
+    expect(env.YOUTUBE_REDIRECT_URI).toBe("https://redirect.example.com/youtube/callback");
+    expect(env.TAVILY_API_KEY).toBe("test-tavily-key");
+    expect(env.OPENAI_API_KEY).toBe("test-openai-key");
+    expect(env.TIKTOK_CLIENT_KEY).toBeUndefined();
+    expect(env.TIKTOK_CLIENT_SECRET).toBeUndefined();
+    expect(env.TIKTOK_REDIRECT_URI).toBeUndefined();
   });
 
   it("applies default API_PORT of 3000 when not set", async () => {
@@ -113,6 +120,20 @@ describe("config", () => {
     const getEnv = await loadGetEnv({ ...validEnv, SUPABASE_URL: "not-a-url" });
 
     expect(() => getEnv()).toThrow();
+  });
+
+  it("accepts optional TikTok vars when provided", async () => {
+    const getEnv = await loadGetEnv({
+      ...validEnv,
+      TIKTOK_CLIENT_KEY: "test-tiktok-key",
+      TIKTOK_CLIENT_SECRET: "test-tiktok-secret",
+      TIKTOK_REDIRECT_URI: "https://redirect.example.com/callback",
+    });
+    const env = getEnv();
+
+    expect(env.TIKTOK_CLIENT_KEY).toBe("test-tiktok-key");
+    expect(env.TIKTOK_CLIENT_SECRET).toBe("test-tiktok-secret");
+    expect(env.TIKTOK_REDIRECT_URI).toBe("https://redirect.example.com/callback");
   });
 
   it("caches result on subsequent calls", async () => {

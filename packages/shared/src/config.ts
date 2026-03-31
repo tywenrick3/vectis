@@ -23,10 +23,10 @@ const envSchema = z.object({
   R2_BUCKET_NAME: z.string().default("vectis"),
   R2_PUBLIC_URL: z.string().url(),
 
-  // TikTok
-  TIKTOK_CLIENT_KEY: z.string().min(1),
-  TIKTOK_CLIENT_SECRET: z.string().min(1),
-  TIKTOK_REDIRECT_URI: z.string().url(),
+  // TikTok (optional — not needed for YouTube-only pipeline)
+  TIKTOK_CLIENT_KEY: z.string().min(1).optional(),
+  TIKTOK_CLIENT_SECRET: z.string().min(1).optional(),
+  TIKTOK_REDIRECT_URI: z.string().url().optional(),
 
   // YouTube
   YOUTUBE_CLIENT_ID: z.string().min(1),

@@ -1,7 +1,7 @@
 import React from "react";
 import { Composition } from "remotion";
-import { TechExplainer } from "./TechExplainer.js";
-import { FinanceEducation } from "./FinanceEducation.js";
+import { TechExplainer } from "./TechExplainer";
+import { FinanceEducation } from "./FinanceEducation";
 import type { Script, VoiceAsset, TranscriptionWord } from "@vectis/shared";
 
 export interface CompositionProps {

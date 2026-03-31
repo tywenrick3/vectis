@@ -4,6 +4,9 @@ const log = createLogger("publisher:tiktok:auth");
 
 export async function handleTikTokCallback(code: string): Promise<TikTokCredentials> {
   const env = getEnv();
+  if (!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_CLIENT_SECRET || !env.TIKTOK_REDIRECT_URI) {
+    throw new Error("TikTok credentials not configured. Set TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, and TIKTOK_REDIRECT_URI in .env");
+  }
   const db = getDb();
 
   log.info("Exchanging auth code for tokens");
@@ -54,6 +57,9 @@ export async function handleTikTokCallback(code: string): Promise<TikTokCredenti
 
 export async function refreshTokenIfNeeded(): Promise<TikTokCredentials> {
   const env = getEnv();
+  if (!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_CLIENT_SECRET) {
+    throw new Error("TikTok credentials not configured. Set TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in .env");
+  }
   const db = getDb();
 
   const { data: creds, error } = await db
