@@ -20,7 +20,9 @@
     "@vectis/voice": "workspace:*",
     "@vectis/video": "workspace:*",
     "@vectis/publisher": "workspace:*",
-    "@vectis/analytics": "workspace:*"
+    "@vectis/analytics": "workspace:*",
+    "@vectis/research": "workspace:*",
+    "@vectis/assembly": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

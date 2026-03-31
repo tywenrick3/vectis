@@ -27,6 +27,17 @@ const envSchema = z.object({
   TIKTOK_CLIENT_KEY: z.string().min(1),
   TIKTOK_CLIENT_SECRET: z.string().min(1),
   TIKTOK_REDIRECT_URI: z.string().url(),
+
+  // YouTube
+  YOUTUBE_CLIENT_ID: z.string().min(1),
+  YOUTUBE_CLIENT_SECRET: z.string().min(1),
+  YOUTUBE_REDIRECT_URI: z.string().url(),
+
+  // Tavily
+  TAVILY_API_KEY: z.string().min(1),
+
+  // OpenAI (Whisper transcription)
+  OPENAI_API_KEY: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;

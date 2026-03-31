@@ -1,5 +1,5 @@
 {
-  "name": "@vectis/ideation",
+  "name": "@vectis/research",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,14 +8,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "@vectis/shared": "workspace:*",
-    "@vectis/research": "workspace:*"
+    "@tavily/core": "^0.6.0",
+    "@vectis/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

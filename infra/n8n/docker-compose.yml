@@ -36,8 +36,11 @@ services:
       - N8N_PROTOCOL=https
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
+      - VECTIS_API_URL=${VECTIS_API_URL}
+      - VECTIS_API_KEY=${VECTIS_API_KEY}
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/.n8n/workflows:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.n8n.rule=Host(`${N8N_DOMAIN}`)"

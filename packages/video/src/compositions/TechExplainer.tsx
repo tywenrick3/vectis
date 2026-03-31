@@ -8,16 +8,27 @@ import {
   interpolate,
 } from "remotion";
 import type { CompositionProps } from "./Root.js";
+import { CaptionOverlay } from "./CaptionOverlay.js";
+
+const CAPTION_STYLE = {
+  activeColor: "#00d4ff",
+  inactiveColor: "#ffffff99",
+  backgroundColor: "rgba(0, 0, 0, 0.7)",
+  fontSize: 42,
+};
 
 export const TechExplainer: React.FC<CompositionProps> = ({
   script,
   voiceAsset,
+  captionWords,
+  hookOverride,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const hookDurationFrames = 3 * fps;
   let currentFrame = hookDurationFrames;
+  const hookText = hookOverride ?? script.hook;
 
   return (
     <AbsoluteFill
@@ -47,7 +58,7 @@ export const TechExplainer: React.FC<CompositionProps> = ({
               transform: `scale(${interpolate(frame, [0, 15], [0.8, 1], { extrapolateRight: "clamp" })})`,
             }}
           >
-            {script.hook}
+            {hookText}
           </div>
         </AbsoluteFill>
       </Sequence>
@@ -127,6 +138,11 @@ export const TechExplainer: React.FC<CompositionProps> = ({
           </div>
         </AbsoluteFill>
       </Sequence>
+
+      {/* Captions */}
+      {captionWords && captionWords.length > 0 && (
+        <CaptionOverlay words={captionWords} style={CAPTION_STYLE} />
+      )}
     </AbsoluteFill>
   );
 };
