@@ -14,7 +14,7 @@ export async function generateHashtags(
   log.info({ title, niche }, "Generating hashtags");
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-opus-4-6",
     max_tokens: 512,
     messages: [
       {

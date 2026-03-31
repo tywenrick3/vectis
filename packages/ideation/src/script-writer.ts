@@ -14,7 +14,7 @@ export async function writeScript(topic: Topic): Promise<Script> {
   log.info({ topicId: topic.id, title: topic.title }, "Writing script");
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-opus-4-6",
     max_tokens: 2048,
     system: nichePrompt,
     messages: [

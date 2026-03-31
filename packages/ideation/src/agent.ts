@@ -213,7 +213,7 @@ Analyze this research and create the best possible short-form video content. Use
     log.info({ iteration, niche: brief.niche }, "Agent iteration");
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-opus-4-6",
       max_tokens: 4096,
       system: systemPrompt,
       tools: TOOLS,
