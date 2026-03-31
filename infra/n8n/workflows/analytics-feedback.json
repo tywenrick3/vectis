@@ -1,0 +1,90 @@
+{
+  "name": "Vectis Analytics Feedback",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 21 * * *" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Evening Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/analytics",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "options": { "timeout": 120000 }
+      },
+      "id": "ingest-and-score",
+      "name": "Ingest & Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.snapshots_created > 0 }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "has-data",
+      "name": "Has New Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nreturn [{\n  json: {\n    summary: `Analytics ingested: ${data.snapshots_created} snapshots, ${data.topics_scored} topics scored`,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "summary",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -40]
+    },
+    {
+      "parameters": {},
+      "id": "no-data",
+      "name": "No New Data",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [660, 160]
+    }
+  ],
+  "connections": {
+    "Evening Trigger": {
+      "main": [[{ "node": "Ingest & Score", "type": "main", "index": 0 }]]
+    },
+    "Ingest & Score": {
+      "main": [[{ "node": "Has New Data?", "type": "main", "index": 0 }]]
+    },
+    "Has New Data?": {
+      "main": [
+        [{ "node": "Build Summary", "type": "main", "index": 0 }],
+        [{ "node": "No New Data", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "tags": [{ "name": "production" }, { "name": "analytics" }]
+}

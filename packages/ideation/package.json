@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@vectis/shared": "workspace:*"
+    "@vectis/shared": "workspace:*",
+    "@vectis/research": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

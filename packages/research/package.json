@@ -1,5 +1,5 @@
 {
-  "name": "@vectis/publisher",
+  "name": "@vectis/research",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@tavily/core": "^0.6.0",
     "@vectis/shared": "workspace:*"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "typescript": "^5.8.0"
   }

@@ -6,6 +6,9 @@ import { renderRoute } from "./routes/render.js";
 import { publishRoute } from "./routes/publish.js";
 import { analyticsRoute } from "./routes/analytics.js";
 import { oauthRoute } from "./routes/oauth.js";
+import { youtubeRoute } from "./routes/youtube.js";
+import { pipelineRoute } from "./routes/pipeline.js";
+import { assemblyRoute } from "./routes/assembly.js";
 
 export const app = new Hono();
 
@@ -18,6 +21,8 @@ app.use("/voice/*", apiKeyAuth);
 app.use("/render/*", apiKeyAuth);
 app.use("/publish/*", apiKeyAuth);
 app.use("/analytics/*", apiKeyAuth);
+app.use("/pipeline/*", apiKeyAuth);
+app.use("/assembly/*", apiKeyAuth);
 
 app.route("/ideate", ideateRoute);
 app.route("/voice", voiceRoute);
@@ -25,3 +30,6 @@ app.route("/render", renderRoute);
 app.route("/publish", publishRoute);
 app.route("/analytics", analyticsRoute);
 app.route("/oauth", oauthRoute);
+app.route("/youtube", youtubeRoute);
+app.route("/pipeline", pipelineRoute);
+app.route("/assembly", assemblyRoute);

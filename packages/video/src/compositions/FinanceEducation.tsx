@@ -8,16 +8,27 @@ import {
   interpolate,
 } from "remotion";
 import type { CompositionProps } from "./Root.js";
+import { CaptionOverlay } from "./CaptionOverlay.js";
+
+const CAPTION_STYLE = {
+  activeColor: "#00ff88",
+  inactiveColor: "#ffffff99",
+  backgroundColor: "rgba(10, 22, 40, 0.8)",
+  fontSize: 42,
+};
 
 export const FinanceEducation: React.FC<CompositionProps> = ({
   script,
   voiceAsset,
+  captionWords,
+  hookOverride,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const hookDurationFrames = 3 * fps;
   let currentFrame = hookDurationFrames;
+  const hookText = hookOverride ?? script.hook;
 
   return (
     <AbsoluteFill
@@ -45,7 +56,7 @@ export const FinanceEducation: React.FC<CompositionProps> = ({
               }),
             }}
           >
-            {script.hook}
+            {hookText}
           </div>
         </AbsoluteFill>
       </Sequence>
@@ -133,6 +144,11 @@ export const FinanceEducation: React.FC<CompositionProps> = ({
           </div>
         </AbsoluteFill>
       </Sequence>
+
+      {/* Captions */}
+      {captionWords && captionWords.length > 0 && (
+        <CaptionOverlay words={captionWords} style={CAPTION_STYLE} />
+      )}
     </AbsoluteFill>
   );
 };

@@ -19,6 +19,7 @@ export interface Script {
   id: string;
   topic_id: string;
   hook: string;
+  hook_variants: string[];
   body: ScriptSegment[];
   cta: string;
   full_text: string;
@@ -53,17 +54,22 @@ export type PipelineStatus =
   | "ideating"
   | "voicing"
   | "rendering"
+  | "assembling"
   | "publishing"
   | "completed"
   | "failed";
 
 export interface PipelineRun {
   id: string;
+  niche: string | null;
   topic_id: string | null;
   script_id: string | null;
   voice_asset_id: string | null;
   video_id: string | null;
   tiktok_publish_id: string | null;
+  youtube_publish_id: string | null;
+  research_brief_id: string | null;
+  assembly_job_ids: string[] | null;
   status: PipelineStatus;
   error_message: string | null;
   started_at: string;
@@ -89,4 +95,126 @@ export interface AnalyticsSnapshot {
   shares: number;
   avg_watch_time_ms: number;
   fetched_at: string;
+}
+
+// YouTube
+
+export interface YouTubeCredentials {
+  id: string;
+  channel_id: string;
+  access_token: string;
+  refresh_token: string;
+  access_token_expires_at: string;
+  updated_at: string;
+}
+
+// Research
+
+export interface TrendingTopic {
+  title: string;
+  source: string;
+  velocity: number;
+  freshness: string;
+}
+
+export interface NewsItem {
+  headline: string;
+  summary: string;
+  url: string;
+  published_at: string;
+}
+
+export interface SourceItem {
+  fact: string;
+  source_url: string;
+  type: "stat" | "quote" | "data_point";
+}
+
+export interface ResearchBrief {
+  id: string;
+  niche: string;
+  trending_topics: TrendingTopic[];
+  recent_news: NewsItem[];
+  competitor_angles: string[];
+  saturation_signals: string[];
+  source_material: SourceItem[];
+  searched_at: string;
+}
+
+// Pipeline Stage Logs
+
+export type PipelineStage =
+  | "research"
+  | "ideation"
+  | "voice"
+  | "render"
+  | "assembly"
+  | "publish"
+  | "analytics";
+
+export interface PipelineStageLog {
+  id: string;
+  run_id: string;
+  stage: PipelineStage;
+  status: "started" | "completed" | "failed";
+  input: Record<string, unknown> | null;
+  output: Record<string, unknown> | null;
+  started_at: string;
+  completed_at: string | null;
+  error: string | null;
+}
+
+// Assembly
+
+export interface TranscriptionWord {
+  word: string;
+  start_ms: number;
+  end_ms: number;
+}
+
+export interface Transcription {
+  id: string;
+  voice_asset_id: string;
+  words: TranscriptionWord[];
+  full_text: string;
+  duration_ms: number;
+  cost: number;
+  created_at: string;
+}
+
+export type OutputFormat = "9:16" | "16:9" | "1:1";
+
+export interface AssemblyOutput {
+  id: string;
+  assembly_job_id: string;
+  format: OutputFormat;
+  output_url: string;
+  width: number;
+  height: number;
+  file_size: number;
+  created_at: string;
+}
+
+export type AssemblyJobStatus =
+  | "pending"
+  | "transcribing"
+  | "rendering"
+  | "formatting"
+  | "completed"
+  | "failed";
+
+export interface AssemblyJob {
+  id: string;
+  script_id: string;
+  video_id: string;
+  voice_asset_id: string;
+  transcription_id: string;
+  hook_variant_index: number;
+  hook_text: string;
+  composition_id: string;
+  outputs: AssemblyOutput[];
+  status: AssemblyJobStatus;
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
 }

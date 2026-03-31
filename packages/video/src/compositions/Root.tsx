@@ -2,11 +2,13 @@ import React from "react";
 import { Composition } from "remotion";
 import { TechExplainer } from "./TechExplainer.js";
 import { FinanceEducation } from "./FinanceEducation.js";
-import type { Script, VoiceAsset } from "@vectis/shared";
+import type { Script, VoiceAsset, TranscriptionWord } from "@vectis/shared";
 
 export interface CompositionProps {
   script: Script;
   voiceAsset: VoiceAsset;
+  captionWords?: TranscriptionWord[];
+  hookOverride?: string;
 }
 
 export const RemotionRoot: React.FC = () => {

@@ -1,0 +1,183 @@
+{
+  "name": "Vectis Main Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * *" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/research",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "niche", "value": "tech-explainer" }]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "research",
+      "name": "Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/ideate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"research_brief_id\": \"{{ $json.research_brief_id }}\" }",
+        "options": { "timeout": 120000 }
+      },
+      "id": "ideation",
+      "name": "Ideation Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/generate-voice",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"script_id\": \"{{ $json.script_id }}\" }",
+        "options": { "timeout": 60000 }
+      },
+      "id": "voice",
+      "name": "Voice Synthesis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/render-video",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"script_id\": \"{{ $node['Ideation Agent'].json.script_id }}\", \"voice_asset_id\": \"{{ $json.voice_asset_id }}\" }",
+        "options": { "timeout": 300000 }
+      },
+      "id": "render",
+      "name": "Video Render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"video_id\": \"{{ $json.video_id }}\", \"script_id\": \"{{ $node['Ideation Agent'].json.script_id }}\", \"platform\": \"youtube\" }",
+        "options": { "timeout": 120000 }
+      },
+      "id": "publish",
+      "name": "Publish to YouTube",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/record-run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"niche\": \"tech-explainer\", \"topic_id\": \"{{ $node['Ideation Agent'].json.topic_id }}\", \"script_id\": \"{{ $node['Ideation Agent'].json.script_id }}\", \"voice_asset_id\": \"{{ $node['Voice Synthesis'].json.voice_asset_id }}\", \"video_id\": \"{{ $node['Video Render'].json.video_id }}\", \"youtube_publish_id\": \"{{ $json.publish_id }}\", \"research_brief_id\": \"{{ $node['Research'].json.research_brief_id }}\", \"status\": \"completed\" }",
+        "options": { "timeout": 10000 }
+      },
+      "id": "record",
+      "name": "Record Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Pipeline failed at {{ $execution.resumeUrl ? 'unknown' : $node[$json.lastNodeName].name }}"
+      },
+      "id": "error-handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [660, 220]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [[{ "node": "Research", "type": "main", "index": 0 }]]
+    },
+    "Research": {
+      "main": [[{ "node": "Ideation Agent", "type": "main", "index": 0 }]]
+    },
+    "Ideation Agent": {
+      "main": [[{ "node": "Voice Synthesis", "type": "main", "index": 0 }]]
+    },
+    "Voice Synthesis": {
+      "main": [[{ "node": "Video Render", "type": "main", "index": 0 }]]
+    },
+    "Video Render": {
+      "main": [[{ "node": "Publish to YouTube", "type": "main", "index": 0 }]]
+    },
+    "Publish to YouTube": {
+      "main": [[{ "node": "Record Run", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "",
+    "timezone": "America/New_York"
+  },
+  "tags": [{ "name": "production" }, { "name": "pipeline" }]
+}
