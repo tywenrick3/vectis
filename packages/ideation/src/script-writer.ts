@@ -25,11 +25,19 @@ export async function writeScript(topic: Topic): Promise<Script> {
 Return JSON:
 {
   "hook": "opening line that grabs attention (2-3 seconds)",
-  "body": [{"narration": "what to say", "visual_cue": "what to show on screen", "duration_estimate_ms": 5000}],
+  "body": [
+    {
+      "narration": "what to say",
+      "visual_cue": {"type": "animated_counter", "value": 1000000, "prefix": "$", "suffix": "", "label": "description"},
+      "duration_estimate_ms": 5000
+    }
+  ],
   "cta": "closing call to action",
   "caption": "post caption for TikTok",
   "hashtags": ["tag1", "tag2"]
-}`,
+}
+
+visual_cue must be a JSON object. Available types: animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide. See system prompt for full schemas.`,
       },
     ],
   });
@@ -37,6 +45,18 @@ Return JSON:
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
   const parsed = JSON.parse(text);
+
+  // Normalize visual_cue: if string, leave as-is (backward compat).
+  // If object but missing/invalid type, convert to text_slide fallback.
+  if (Array.isArray(parsed.body)) {
+    for (const segment of parsed.body) {
+      if (typeof segment.visual_cue === "object" && segment.visual_cue !== null) {
+        if (!segment.visual_cue.type) {
+          segment.visual_cue = { type: "text_slide", text: segment.narration };
+        }
+      }
+    }
+  }
 
   const fullText = [
     parsed.hook,

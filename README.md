@@ -125,7 +125,7 @@ pnpm dev         # Start the API server (default port 3001)
 
 ## API
 
-All pipeline endpoints require `Authorization: Bearer <API_KEY>`.
+All pipeline endpoints require `x-api-key: <API_KEY>` header.
 
 ### Pipeline Endpoints
 
@@ -147,37 +147,37 @@ Each stage feeds into the next:
 ```bash
 # 1. Research
 curl -X POST http://localhost:3001/pipeline/research \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"niche": "tech"}'
+  -d '{"niche": "tech-explainer"}'
 
 # 2. Ideate (uses research_brief_id from step 1)
 curl -X POST http://localhost:3001/pipeline/ideate \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"research_brief_id": "<id>"}'
 
 # 3. Generate voice (uses script_id from step 2)
 curl -X POST http://localhost:3001/pipeline/generate-voice \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"script_id": "<id>"}'
 
 # 4. Render video
 curl -X POST http://localhost:3001/pipeline/render-video \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"script_id": "<id>", "voice_asset_id": "<id>"}'
 
 # 5. Assemble (transcribe + captions + formats)
 curl -X POST http://localhost:3001/pipeline/assemble \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"script_id": "<id>", "video_id": "<id>", "voice_asset_id": "<id>"}'
 
 # 6. Publish
 curl -X POST http://localhost:3001/pipeline/publish \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "x-api-key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"video_id": "<id>", "script_id": "<id>", "platform": "youtube"}'
 ```
@@ -198,7 +198,16 @@ Sends the script text to ElevenLabs `eleven_flash_v2_5`, uploads the resulting M
 
 ### Video
 
-Renders a Remotion composition (TechExplainer or FinanceEducation based on niche) at 1080x1920 (9:16) / 30fps. Output is uploaded to R2.
+Renders a Remotion composition at 1080x1920 (9:16) / 30fps with programmatic data visualizations. Each script segment's `visual_cue` is a structured object that maps to a specific component:
+
+- **AnimatedCounter** — Numbers tick up with spring bounce (e.g. "$202B")
+- **BarChart** — Horizontal bars grow with staggered timing
+- **ComparisonCard** — Two cards slide in from opposite edges
+- **StatCallout** — Big stat with direction arrow and radial glow
+- **ListReveal** — Bullet points appear one by one
+- **TextSlide** — Fallback for simple text
+
+All compositions include an animated gradient background, progress bar, and smooth enter/exit transitions per segment. Niche-specific theming (tech = cyan, finance = green) is applied via a shared `NicheComposition`. Output is uploaded to R2.
 
 ### Assembly
 

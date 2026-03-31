@@ -1,3 +1,3 @@
-export { renderVideo, renderToFile, type RenderToFileOptions } from "./render.js";
-export type { CompositionProps } from "./compositions/Root.js";
-export type { CaptionStyle } from "./compositions/CaptionOverlay.js";
+export { renderVideo, renderToFile, type RenderToFileOptions } from "./render";
+export type { CompositionProps } from "./compositions/Root";
+export type { CaptionStyle } from "./compositions/CaptionOverlay";

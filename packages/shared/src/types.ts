@@ -9,9 +9,64 @@ export interface Topic {
   updated_at: string;
 }
 
+// --- Visual Cue Types (data-driven visualizations) ---
+
+export interface AnimatedCounterCue {
+  type: "animated_counter";
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+}
+
+export interface BarChartCue {
+  type: "bar_chart";
+  title: string;
+  bars: { label: string; value: number; color?: string }[];
+  unit?: string;
+}
+
+export interface ComparisonCardCue {
+  type: "comparison";
+  left: { name: string; specs: { label: string; value: string }[] };
+  right: { name: string; specs: { label: string; value: string }[] };
+}
+
+export interface StatCalloutCue {
+  type: "stat_callout";
+  value: string;
+  label: string;
+  direction?: "up" | "down" | "neutral";
+}
+
+export interface ListRevealCue {
+  type: "list_reveal";
+  title?: string;
+  items: string[];
+}
+
+export interface TextSlideCue {
+  type: "text_slide";
+  text: string;
+}
+
+export type VisualCue =
+  | AnimatedCounterCue
+  | BarChartCue
+  | ComparisonCardCue
+  | StatCalloutCue
+  | ListRevealCue
+  | TextSlideCue;
+
+export function isStructuredCue(cue: string | VisualCue): cue is VisualCue {
+  return typeof cue === "object" && cue !== null && "type" in cue;
+}
+
+// --- Script ---
+
 export interface ScriptSegment {
   narration: string;
-  visual_cue: string;
+  visual_cue: string | VisualCue;
   duration_estimate_ms: number;
 }
 

@@ -90,12 +90,15 @@ const TOOLS: Anthropic.Tool[] = [
             type: "object",
             properties: {
               narration: { type: "string" },
-              visual_cue: { type: "string" },
+              visual_cue: {
+                description:
+                  "Structured visual cue object with a type field (animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide). See system prompt for schemas.",
+              },
               duration_estimate_ms: { type: "number" },
             },
             required: ["narration", "visual_cue", "duration_estimate_ms"],
           },
-          description: "Script body segments",
+          description: "Script body segments with structured visual cues",
         },
         cta: {
           type: "string",
@@ -265,6 +268,18 @@ Analyze this research and create the best possible short-form video content. Use
 
   if (!submitted) {
     throw new Error("Ideation agent failed to submit content within iteration limit");
+  }
+
+  // Normalize visual_cue: ensure objects have a valid type field
+  if (Array.isArray(submitted.body)) {
+    for (const segment of submitted.body as Record<string, unknown>[]) {
+      if (typeof segment.visual_cue === "object" && segment.visual_cue !== null) {
+        const cue = segment.visual_cue as Record<string, unknown>;
+        if (!cue.type) {
+          segment.visual_cue = { type: "text_slide", text: segment.narration as string };
+        }
+      }
+    }
   }
 
   // Store topic
