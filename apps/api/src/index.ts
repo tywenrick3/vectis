@@ -1,4 +1,8 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+config({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 import { serve } from "@hono/node-server";
 import { app } from "./app.js";
 import { getEnv, createLogger } from "@vectis/shared";

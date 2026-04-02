@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getDb, createLogger } from "@vectis/shared";
+import { getDb, createLogger, deleteFromR2Batch, r2KeyFromUrl } from "@vectis/shared";
 import { buildResearchBrief } from "@vectis/research";
 import { runIdeationAgent } from "@vectis/ideation";
 import { synthesize } from "@vectis/voice";
@@ -293,6 +293,163 @@ pipelineRoute.post("/analytics", async (c) => {
     return c.json({ error: message }, 500);
   }
 });
+
+// Delete R2 files for a single published pipeline run
+pipelineRoute.delete("/:runId/files", async (c) => {
+  const runId = c.req.param("runId");
+  const db = getDb();
+
+  try {
+    const { data: run } = await db
+      .from("pipeline_runs")
+      .select()
+      .eq("id", runId)
+      .single();
+
+    if (!run) return c.json({ error: "Run not found" }, 404);
+
+    if (run.status !== "completed" || !run.youtube_publish_id) {
+      return c.json(
+        { error: "Run must be completed and published to YouTube before files can be deleted" },
+        409
+      );
+    }
+
+    const keys = await collectR2Keys(db, run);
+    if (keys.length === 0) {
+      return c.json({ run_id: runId, deleted: 0, keys: [] });
+    }
+
+    const { deleted } = await deleteFromR2Batch(keys);
+    await nullifyUrls(db, run);
+
+    log.info({ runId, deleted, keys }, "R2 files deleted for run");
+    return c.json({ run_id: runId, deleted, keys });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    log.error({ error: message, runId }, "Failed to delete files");
+    return c.json({ error: message }, 500);
+  }
+});
+
+// Bulk-delete R2 files for all published pipeline runs
+pipelineRoute.delete("/published/files", async (c) => {
+  const dryRun = c.req.query("dry_run") === "true";
+  const db = getDb();
+
+  try {
+    const { data: runs, error } = await db
+      .from("pipeline_runs")
+      .select()
+      .eq("status", "completed")
+      .not("youtube_publish_id", "is", null);
+
+    if (error) throw new Error(error.message);
+    if (!runs || runs.length === 0) {
+      return c.json({ runs_cleaned: 0, files_deleted: 0, run_ids: [] });
+    }
+
+    const allKeys: string[] = [];
+    const cleanedRuns: typeof runs = [];
+
+    for (const run of runs) {
+      const keys = await collectR2Keys(db, run);
+      if (keys.length > 0) {
+        allKeys.push(...keys);
+        cleanedRuns.push(run);
+      }
+    }
+
+    if (allKeys.length === 0) {
+      return c.json({ runs_cleaned: 0, files_deleted: 0, run_ids: [] });
+    }
+
+    if (dryRun) {
+      return c.json({
+        dry_run: true,
+        runs_to_clean: cleanedRuns.length,
+        files_to_delete: allKeys.length,
+        run_ids: cleanedRuns.map((r) => r.id),
+        keys: allKeys,
+      });
+    }
+
+    const { deleted } = await deleteFromR2Batch(allKeys);
+    for (const run of cleanedRuns) {
+      await nullifyUrls(db, run);
+    }
+
+    log.info(
+      { runsCleaned: cleanedRuns.length, filesDeleted: deleted },
+      "Bulk R2 cleanup complete"
+    );
+    return c.json({
+      runs_cleaned: cleanedRuns.length,
+      files_deleted: deleted,
+      run_ids: cleanedRuns.map((r) => r.id),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    log.error({ error: message }, "Bulk cleanup failed");
+    return c.json({ error: message }, 500);
+  }
+});
+
+// Collect R2 keys for all assets tied to a pipeline run
+async function collectR2Keys(
+  db: ReturnType<typeof getDb>,
+  run: { voice_asset_id: string | null; video_id: string | null; assembly_job_ids: string[] | null }
+): Promise<string[]> {
+  const keys: string[] = [];
+
+  if (run.voice_asset_id) {
+    const { data } = await db
+      .from("voice_assets")
+      .select("audio_url")
+      .eq("id", run.voice_asset_id)
+      .single();
+    if (data?.audio_url) keys.push(r2KeyFromUrl(data.audio_url));
+  }
+
+  if (run.video_id) {
+    const { data } = await db
+      .from("videos")
+      .select("video_url")
+      .eq("id", run.video_id)
+      .single();
+    if (data?.video_url) keys.push(r2KeyFromUrl(data.video_url));
+  }
+
+  if (run.assembly_job_ids && run.assembly_job_ids.length > 0) {
+    const { data: outputs } = await db
+      .from("assembly_outputs")
+      .select("output_url")
+      .in("assembly_job_id", run.assembly_job_ids);
+    if (outputs) {
+      for (const o of outputs) {
+        if (o.output_url) keys.push(r2KeyFromUrl(o.output_url));
+      }
+    }
+  }
+
+  return keys;
+}
+
+// Null out media URLs in DB after R2 deletion
+async function nullifyUrls(
+  db: ReturnType<typeof getDb>,
+  run: { voice_asset_id: string | null; video_id: string | null; assembly_job_ids: string[] | null }
+): Promise<void> {
+  if (run.voice_asset_id) {
+    await db.from("voice_assets").update({ audio_url: null }).eq("id", run.voice_asset_id);
+  }
+  if (run.video_id) {
+    await db.from("videos").update({ video_url: null }).eq("id", run.video_id);
+  }
+  if (run.assembly_job_ids && run.assembly_job_ids.length > 0) {
+    await db.from("assembly_outputs").update({ output_url: null }).in("assembly_job_id", run.assembly_job_ids);
+  }
+}
 
 // Helper: log a pipeline stage
 async function logStage(

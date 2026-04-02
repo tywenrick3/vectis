@@ -8,10 +8,14 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "clean": "turbo clean",
-    "test": "turbo test"
+    "test": "turbo test",
+    "e2e": "node --env-file=.env --import=tsx scripts/e2e-pipeline.ts",
+    "e2e:dry": "node --env-file=.env --import=tsx scripts/e2e-pipeline.ts --dry-run",
+    "purge-r2": "node --env-file=.env --import=tsx scripts/purge-r2.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
+    "tsx": "^4.19.0",
     "turbo": "^2.5.0",
     "typescript": "^5.8.0",
     "vitest": "^4.1.1"
