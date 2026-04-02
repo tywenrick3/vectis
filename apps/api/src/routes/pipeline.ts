@@ -14,18 +14,19 @@ export const pipelineRoute = new Hono();
 
 // Trigger research
 pipelineRoute.post("/research", async (c) => {
-  const { niche } = await c.req.json().catch(() => ({ niche: "tech-explainer" }));
+  const { niche, run_id } = await c.req.json().catch(() => ({ niche: "tech-explainer", run_id: null }));
   const db = getDb();
 
   try {
     const brief = await buildResearchBrief(niche);
 
-    await logStage(db, null, "research", brief, { briefId: brief.id });
+    await logStage(db, run_id, "research", "completed", { niche }, { briefId: brief.id });
 
     log.info({ briefId: brief.id, niche }, "Research complete");
     return c.json({ research_brief_id: brief.id, niche });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "research", "failed", { niche }, null, message);
     log.error({ error: message }, "Research failed");
     return c.json({ error: message }, 500);
   }
@@ -33,7 +34,7 @@ pipelineRoute.post("/research", async (c) => {
 
 // Trigger ideation with research brief
 pipelineRoute.post("/ideate", async (c) => {
-  const { research_brief_id } = await c.req.json();
+  const { research_brief_id, run_id } = await c.req.json();
   const db = getDb();
 
   if (!research_brief_id) {
@@ -51,6 +52,8 @@ pipelineRoute.post("/ideate", async (c) => {
 
     const { topic, script } = await runIdeationAgent(brief);
 
+    await logStage(db, run_id, "ideation", "completed", { research_brief_id }, { topicId: topic.id, scriptId: script.id });
+
     log.info({ topicId: topic.id, scriptId: script.id }, "Ideation complete");
     return c.json({
       topic_id: topic.id,
@@ -59,6 +62,7 @@ pipelineRoute.post("/ideate", async (c) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "ideation", "failed", { research_brief_id }, null, message);
     log.error({ error: message }, "Ideation failed");
     return c.json({ error: message }, 500);
   }
@@ -66,7 +70,7 @@ pipelineRoute.post("/ideate", async (c) => {
 
 // Trigger voice synthesis
 pipelineRoute.post("/generate-voice", async (c) => {
-  const { script_id } = await c.req.json();
+  const { script_id, run_id } = await c.req.json();
   const db = getDb();
 
   if (!script_id) return c.json({ error: "script_id required" }, 400);
@@ -82,6 +86,8 @@ pipelineRoute.post("/generate-voice", async (c) => {
 
     const voiceAsset = await synthesize(script);
 
+    await logStage(db, run_id, "voice", "completed", { script_id }, { voiceAssetId: voiceAsset.id, duration_ms: voiceAsset.duration_ms });
+
     log.info({ voiceAssetId: voiceAsset.id }, "Voice generated");
     return c.json({
       voice_asset_id: voiceAsset.id,
@@ -90,6 +96,7 @@ pipelineRoute.post("/generate-voice", async (c) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "voice", "failed", { script_id }, null, message);
     log.error({ error: message }, "Voice generation failed");
     return c.json({ error: message }, 500);
   }
@@ -97,7 +104,7 @@ pipelineRoute.post("/generate-voice", async (c) => {
 
 // Trigger video render
 pipelineRoute.post("/render-video", async (c) => {
-  const { script_id, voice_asset_id } = await c.req.json();
+  const { script_id, voice_asset_id, run_id } = await c.req.json();
   const db = getDb();
 
   if (!script_id || !voice_asset_id) {
@@ -122,6 +129,8 @@ pipelineRoute.post("/render-video", async (c) => {
     const niche = topic?.niche ?? "tech-explainer";
     const video = await renderVideo(script, voiceAsset, niche);
 
+    await logStage(db, run_id, "render", "completed", { script_id, voice_asset_id }, { videoId: video.id, duration_ms: video.duration_ms });
+
     log.info({ videoId: video.id }, "Video rendered");
     return c.json({
       video_id: video.id,
@@ -130,6 +139,7 @@ pipelineRoute.post("/render-video", async (c) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "render", "failed", { script_id, voice_asset_id }, null, message);
     log.error({ error: message }, "Render failed");
     return c.json({ error: message }, 500);
   }
@@ -137,8 +147,9 @@ pipelineRoute.post("/render-video", async (c) => {
 
 // Trigger assembly (captions, multi-format, hook variants)
 pipelineRoute.post("/assemble", async (c) => {
-  const { script_id, video_id, voice_asset_id, formats, include_hook_variants } =
+  const { script_id, video_id, voice_asset_id, formats, include_hook_variants, run_id } =
     await c.req.json();
+  const db = getDb();
 
   if (!script_id || !video_id || !voice_asset_id) {
     return c.json({ error: "script_id, video_id, and voice_asset_id required" }, 400);
@@ -156,6 +167,8 @@ pipelineRoute.post("/assemble", async (c) => {
     const jobIds = jobs.map((j) => j.id);
     const primaryOutput = jobs[0]?.outputs?.find((o) => o.format === "9:16");
 
+    await logStage(db, run_id, "assembly", "completed", { script_id, video_id, voice_asset_id }, { jobIds, jobCount: jobs.length });
+
     log.info({ jobCount: jobs.length, jobIds }, "Assembly complete");
     return c.json({
       assembly_job_ids: jobIds,
@@ -164,6 +177,7 @@ pipelineRoute.post("/assemble", async (c) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "assembly", "failed", { script_id, video_id, voice_asset_id }, null, message);
     log.error({ error: message }, "Assembly failed");
     return c.json({ error: message }, 500);
   }
@@ -171,7 +185,7 @@ pipelineRoute.post("/assemble", async (c) => {
 
 // Publish to platform
 pipelineRoute.post("/publish", async (c) => {
-  const { video_id, script_id, platform } = await c.req.json();
+  const { video_id, script_id, platform, run_id } = await c.req.json();
   const db = getDb();
 
   if (!video_id || !script_id) {
@@ -196,10 +210,13 @@ pipelineRoute.post("/publish", async (c) => {
       publishId = await publishToYouTube(video, script);
     }
 
+    await logStage(db, run_id, "publish", "completed", { video_id, script_id, platform: targetPlatform }, { publishId });
+
     log.info({ publishId, platform: targetPlatform }, "Published");
     return c.json({ publish_id: publishId, platform: targetPlatform });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "publish", "failed", { video_id, script_id, platform: platform ?? "youtube" }, null, message);
     log.error({ error: message }, "Publish failed");
     return c.json({ error: message }, 500);
   }
@@ -260,12 +277,19 @@ pipelineRoute.get("/status/:runId", async (c) => {
 
 // Trigger analytics ingest + scoring
 pipelineRoute.post("/analytics", async (c) => {
+  const { run_id } = await c.req.json().catch(() => ({ run_id: null }));
+  const db = getDb();
+
   try {
     const snapshots = await ingestMetrics();
     const scored = await scoreTopics();
+
+    await logStage(db, run_id, "analytics", "completed", {}, { snapshots_created: snapshots.length, topics_scored: scored });
+
     return c.json({ snapshots_created: snapshots.length, topics_scored: scored });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    await logStage(db, run_id, "analytics", "failed", {}, null, message);
     return c.json({ error: message }, 500);
   }
 });
@@ -275,17 +299,20 @@ async function logStage(
   db: ReturnType<typeof getDb>,
   runId: string | null,
   stage: string,
+  status: "started" | "completed" | "failed",
   input: unknown,
-  output: unknown
+  output: unknown,
+  error?: string
 ) {
   if (!runId) return;
   await db.from("pipeline_stage_logs").insert({
     run_id: runId,
     stage,
-    status: "completed",
+    status,
     input,
     output,
+    error: error ?? null,
     started_at: new Date().toISOString(),
-    completed_at: new Date().toISOString(),
+    completed_at: status !== "started" ? new Date().toISOString() : null,
   });
 }

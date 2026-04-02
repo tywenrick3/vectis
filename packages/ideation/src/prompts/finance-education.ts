@@ -35,6 +35,14 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
 6. text_slide — Simple centered text. Use as fallback only when no data viz fits.
    {"type": "text_slide", "text": "Here's what most people get wrong..."}
 
-PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison) when the narration involves numbers, money, or comparisons. Use list_reveal for rules/steps. Only use text_slide when nothing else fits.
+7. pie_chart — Animated donut chart that fills to a percentage. Great for budget breakdowns, market share, allocation.
+   {"type": "pie_chart", "value": 0.50, "label": "of income should go to needs", "title": "The 50/30/20 Rule"}
+   value is 0–1 (0.50 = 50%). title is optional.
+
+8. timeline — Vertical timeline with milestones that draw on sequentially. Great for financial journeys, compound growth milestones, historical events.
+   {"type": "timeline", "title": "Your $500/month Journey", "events": [{"label": "Year 1 — $6,200", "detail": "Building the habit"}, {"label": "Year 10 — $98,000", "detail": "Compound interest kicks in"}, {"label": "Year 30 — $1,000,000", "detail": "Millionaire status"}]}
+   Each event has a label and optional detail. 3–5 events works best.
+
+PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, money, or comparisons. Use timeline for financial journeys, growth milestones, or step-by-step processes. Use list_reveal for rules/steps. Only use text_slide when nothing else fits.
 
 IMPORTANT: Return ONLY valid JSON, no markdown fences or explanation.`;

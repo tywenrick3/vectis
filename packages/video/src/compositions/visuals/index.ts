@@ -7,5 +7,7 @@ export { ComparisonCard } from "./ComparisonCard";
 export { StatCallout } from "./StatCallout";
 export { ListReveal } from "./ListReveal";
 export { TextSlide } from "./TextSlide";
+export { PieChart } from "./PieChart";
+export { Timeline } from "./Timeline";
 export { SegmentRenderer } from "./SegmentRenderer";
 export { THEMES, type NicheTheme } from "./themes";

@@ -50,13 +50,29 @@ export interface TextSlideCue {
   text: string;
 }
 
+export interface PieChartCue {
+  type: "pie_chart";
+  title?: string;
+  value: number;
+  label: string;
+  color?: string;
+}
+
+export interface TimelineCue {
+  type: "timeline";
+  title?: string;
+  events: { label: string; detail?: string }[];
+}
+
 export type VisualCue =
   | AnimatedCounterCue
   | BarChartCue
   | ComparisonCardCue
   | StatCalloutCue
   | ListRevealCue
-  | TextSlideCue;
+  | TextSlideCue
+  | PieChartCue
+  | TimelineCue;
 
 export function isStructuredCue(cue: string | VisualCue): cue is VisualCue {
   return typeof cue === "object" && cue !== null && "type" in cue;

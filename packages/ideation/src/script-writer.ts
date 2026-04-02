@@ -37,7 +37,7 @@ Return JSON:
   "hashtags": ["tag1", "tag2"]
 }
 
-visual_cue must be a JSON object. Available types: animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide. See system prompt for full schemas.`,
+visual_cue must be a JSON object. Available types: animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide, pie_chart, timeline. See system prompt for full schemas.`,
       },
     ],
   });

@@ -6,6 +6,8 @@ import { ComparisonCard } from "./ComparisonCard";
 import { StatCallout } from "./StatCallout";
 import { ListReveal } from "./ListReveal";
 import { TextSlide } from "./TextSlide";
+import { PieChart } from "./PieChart";
+import { Timeline } from "./Timeline";
 
 interface SegmentRendererProps {
   visualCue: string | VisualCue;
@@ -90,6 +92,28 @@ export const SegmentRenderer: React.FC<SegmentRendererProps> = ({
       return (
         <TextSlide
           text={visualCue.text}
+          accentColor={accentColor}
+          durationInFrames={durationInFrames}
+        />
+      );
+
+    case "pie_chart":
+      return (
+        <PieChart
+          title={visualCue.title}
+          value={visualCue.value}
+          label={visualCue.label}
+          color={visualCue.color}
+          accentColor={accentColor}
+          durationInFrames={durationInFrames}
+        />
+      );
+
+    case "timeline":
+      return (
+        <Timeline
+          title={visualCue.title}
+          events={visualCue.events}
           accentColor={accentColor}
           durationInFrames={durationInFrames}
         />

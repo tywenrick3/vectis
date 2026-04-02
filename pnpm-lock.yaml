@@ -162,9 +162,15 @@ importers:
       '@remotion/cli':
         specifier: ^4.0.0
         version: 4.0.438(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@remotion/paths':
+        specifier: ^4.0.443
+        version: 4.0.443
       '@remotion/renderer':
         specifier: ^4.0.0
         version: 4.0.438(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@remotion/shapes':
+        specifier: ^4.0.443
+        version: 4.0.443(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vectis/shared':
         specifier: workspace:*
         version: link:../shared
@@ -825,6 +831,9 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  '@remotion/paths@4.0.443':
+    resolution: {integrity: sha512-HKJssEUKgG/0SrIJOfc1HCyUUgxLK0/ymcB+caejaAlZtL0GuKq0tYGiY0WBlQYcPqjkB8HaCrUH0qnrJnIZ+w==}
+
   '@remotion/player@4.0.438':
     resolution: {integrity: sha512-2OT8r0arsjxUEVEa5dNgain7ChbDG0THZglxh1Bo4U8nTSMnuX+1yyF0MVOlmT56yaESfoiGbZvnnpB6e7Ltew==}
     peerDependencies:
@@ -833,6 +842,12 @@ packages:
 
   '@remotion/renderer@4.0.438':
     resolution: {integrity: sha512-gTQZ3o8bN7oZIj4aN7hRQ+q5ycOZ1J4TEcGCOXtsLscBbGqiq/dUedDjDWrtdd+VUrPXP3V7bhn7+yWI5/1sHA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@remotion/shapes@4.0.443':
+    resolution: {integrity: sha512-s1nHTE3GDyrDm/Jq5j2NyDKKcuxTeshXW0uDOxvjvDccdvX7Orh+F0FV13X6hU83QAkl1mh3+nwFPRyIJlMmuQ==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -1735,6 +1750,8 @@ packages:
       picomatch: ^3 || ^4
     peerDependenciesMeta:
       picomatch:
+        optional: true
+
   fluent-ffmpeg@2.1.3:
     resolution: {integrity: sha512-Be3narBNt2s6bsaqP6Jzq91heDgOEaDCJAXcE3qcma/EJBSy5FB4cvO31XBInuAuKBx8Kptf8dkhjK0IOru39Q==}
     engines: {node: '>=18'}
@@ -3266,7 +3283,7 @@ snapshots:
       remotion: 4.0.438(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       source-map: 0.7.3
       style-loader: 4.0.0(webpack@5.105.0(esbuild@0.25.0))
-      webpack: 5.105.0(esbuild@0.25.0)
+      webpack: 5.105.0(esbuild@0.27.4)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/helpers'
@@ -3334,6 +3351,8 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       remotion: 4.0.438(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
+  '@remotion/paths@4.0.443': {}
+
   '@remotion/player@4.0.438(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
@@ -3363,6 +3382,12 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  '@remotion/shapes@4.0.443(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@remotion/paths': 4.0.443
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@remotion/streaming@4.0.438': {}
 
@@ -4258,7 +4283,7 @@ snapshots:
       postcss-value-parser: 4.2.0
       schema-utils: 3.3.0
       semver: 7.7.4
-      webpack: 5.105.0(esbuild@0.25.0)
+      webpack: 5.105.0(esbuild@0.27.4)
 
   cssesc@3.0.0: {}
 
@@ -4447,6 +4472,7 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
   fluent-ffmpeg@2.1.3:
     dependencies:
       async: 0.2.10
@@ -4904,7 +4930,7 @@ snapshots:
 
   style-loader@4.0.0(webpack@5.105.0(esbuild@0.25.0)):
     dependencies:
-      webpack: 5.105.0(esbuild@0.25.0)
+      webpack: 5.105.0(esbuild@0.27.4)
 
   supports-color@8.1.1:
     dependencies:
@@ -4912,15 +4938,15 @@ snapshots:
 
   tapable@2.3.0: {}
 
-  terser-webpack-plugin@5.4.0(esbuild@0.25.0)(webpack@5.105.0(esbuild@0.27.4)):
+  terser-webpack-plugin@5.4.0(esbuild@0.27.4)(webpack@5.105.0(esbuild@0.25.0)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.46.1
-      webpack: 5.105.0(esbuild@0.25.0)
+      webpack: 5.105.0(esbuild@0.27.4)
     optionalDependencies:
-      esbuild: 0.25.0
+      esbuild: 0.27.4
 
   terser@5.46.1:
     dependencies:
@@ -5042,7 +5068,7 @@ snapshots:
 
   webpack-sources@3.3.4: {}
 
-  webpack@5.105.0(esbuild@0.25.0):
+  webpack@5.105.0(esbuild@0.27.4):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.8
@@ -5066,7 +5092,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.4.0(esbuild@0.25.0)(webpack@5.105.0(esbuild@0.27.4))
+      terser-webpack-plugin: 5.4.0(esbuild@0.27.4)(webpack@5.105.0(esbuild@0.25.0))
       watchpack: 2.5.1
       webpack-sources: 3.3.4
     transitivePeerDependencies:

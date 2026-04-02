@@ -32,6 +32,14 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
 6. text_slide — Simple centered text. Use as fallback only when no data viz fits.
    {"type": "text_slide", "text": "But here's the catch..."}
 
-PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison) when the narration involves numbers, stats, or comparisons. Use list_reveal for enumerated points. Only use text_slide when nothing else fits.
+7. pie_chart — Animated donut chart that fills to a percentage. Great for market share, adoption rates, proportions.
+   {"type": "pie_chart", "value": 0.73, "label": "of developers now use AI coding tools", "title": "AI Adoption Rate"}
+   value is 0–1 (0.73 = 73%). title is optional.
+
+8. timeline — Vertical timeline with milestones that draw on sequentially. Great for history, roadmaps, step sequences.
+   {"type": "timeline", "title": "The Rise of Rust", "events": [{"label": "2010 — Mozilla Research", "detail": "Graydon Hoare starts the project"}, {"label": "2015 — 1.0 Release"}, {"label": "2023 — Linux Kernel"}]}
+   Each event has a label and optional detail. 3–5 events works best.
+
+PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, stats, or comparisons. Use timeline for chronological sequences or step-by-step processes. Use list_reveal for enumerated points. Only use text_slide when nothing else fits.
 
 IMPORTANT: Return ONLY valid JSON, no markdown fences or explanation.`;
