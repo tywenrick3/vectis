@@ -11,7 +11,7 @@ import { NICHE_PROMPTS } from "./prompts/index.js";
 
 const log = createLogger("ideation:agent");
 
-const MAX_ITERATIONS = 5;
+const MAX_ITERATIONS = 20;
 
 // Tool definitions for the agent
 const TOOLS: Anthropic.Tool[] = [

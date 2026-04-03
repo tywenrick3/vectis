@@ -235,7 +235,7 @@ async function stageResearch(state: PipelineState): Promise<void> {
 async function stageIdeate(state: PipelineState): Promise<void> {
   const data = await apiCall("POST", "/pipeline/ideate", {
     research_brief_id: state.research_brief_id,
-  });
+  }, 300_000);
   assertField(data, "topic_id", "string");
   assertField(data, "script_id", "string");
   assertField(data, "title", "string");
@@ -451,6 +451,7 @@ async function main(): Promise<void> {
   }
 
   printSummary(totalStart, dryRun);
+  cleanup();
 }
 
 main();
