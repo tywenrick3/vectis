@@ -11,11 +11,17 @@ vi.mock("@vectis/shared", () => ({
   })),
 }));
 
-const mockSearch = vi.fn();
-const mockExtract = vi.fn();
+const { mockSearch, mockBatchScrape } = vi.hoisted(() => ({
+  mockSearch: vi.fn(),
+  mockBatchScrape: vi.fn(),
+}));
+
 vi.mock("../tavily.js", () => ({
   search: mockSearch,
-  extract: mockExtract,
+}));
+
+vi.mock("../firecrawl.js", () => ({
+  batchScrape: mockBatchScrape,
 }));
 
 // ── Imports (after mocks) ────────────────────────────────────────────────────
@@ -81,7 +87,7 @@ describe("buildResearchBrief", () => {
 
   it("runs 5 parallel searches for the niche", async () => {
     mockSearch.mockResolvedValue([makeSearchResult()]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const briefRow = { id: "brief-1", niche: "tech-explainer" };
     const mockDb = createMockDb({
@@ -107,7 +113,7 @@ describe("buildResearchBrief", () => {
     });
 
     mockSearch.mockResolvedValue([trendingResult]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const briefRow = {
       id: "brief-1",
@@ -144,7 +150,7 @@ describe("buildResearchBrief", () => {
     const newsResult = makeSearchResult({ content: longContent });
 
     mockSearch.mockResolvedValue([newsResult]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
@@ -172,8 +178,8 @@ describe("buildResearchBrief", () => {
       .mockResolvedValueOnce([]) // saturation
       .mockResolvedValueOnce([highScore, lowScore]); // sources
 
-    mockExtract.mockResolvedValue([
-      { url: "https://high.com", content: "Extracted content" },
+    mockBatchScrape.mockResolvedValue([
+      { url: "https://high.com", markdown: "Extracted content" },
     ]);
 
     const mockDb = createMockDb({
@@ -183,13 +189,13 @@ describe("buildResearchBrief", () => {
 
     await buildResearchBrief("tech-explainer");
 
-    // Extract should only be called with high-score URLs
-    expect(mockExtract).toHaveBeenCalledWith(["https://high.com"]);
+    // batchScrape should only be called with high-score URLs
+    expect(mockBatchScrape).toHaveBeenCalledWith(["https://high.com"]);
   });
 
   it("skips extraction when no sources score > 0.5", async () => {
     mockSearch.mockResolvedValue([makeSearchResult({ score: 0.2 })]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
@@ -203,12 +209,12 @@ describe("buildResearchBrief", () => {
     // Actually: mockSearch.mockResolvedValue applies to all calls
     // So all 5 return [{score: 0.2}], which means sources have score 0.2
     // Therefore extract should not be called
-    expect(mockExtract).not.toHaveBeenCalled();
+    expect(mockBatchScrape).not.toHaveBeenCalled();
   });
 
   it("throws when DB insert fails", async () => {
     mockSearch.mockResolvedValue([]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const mockDb = createMockDb({
       research_briefs: {
@@ -226,7 +232,7 @@ describe("buildResearchBrief", () => {
   it("uses 'unknown' for freshness when published_date is null", async () => {
     const result = makeSearchResult({ published_date: null });
     mockSearch.mockResolvedValue([result]);
-    mockExtract.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },

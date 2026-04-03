@@ -33,13 +33,28 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "tavily_extract",
     description:
-      "Extract content from a specific URL. Use this to pull detailed information from a page you found via search.",
+      "Extract content from a specific URL using Tavily. Returns raw content — prefer firecrawl_scrape for cleaner, richer results.",
     input_schema: {
       type: "object" as const,
       properties: {
         url: {
           type: "string",
           description: "The URL to extract content from",
+        },
+      },
+      required: ["url"],
+    },
+  },
+  {
+    name: "firecrawl_scrape",
+    description:
+      "Scrape a URL and get clean, readable markdown content. Use this to deeply read articles, blog posts, or data pages. Returns richer content than tavily_extract — prefer this for detailed research.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        url: {
+          type: "string",
+          description: "The URL to scrape",
         },
       },
       required: ["url"],
@@ -144,6 +159,11 @@ async function handleToolCall(
       const results = await extract([input.url as string]);
       return JSON.stringify(results);
     }
+    case "firecrawl_scrape": {
+      const { scrape } = await import("@vectis/research");
+      const result = await scrape(input.url as string);
+      return JSON.stringify(result);
+    }
     case "score_lookup": {
       const db = getDb();
       const limit = (input.limit as number) ?? 10;
@@ -187,7 +207,7 @@ You are an ideation agent for a short-form video content pipeline. You have been
 Your job:
 1. Review the research brief carefully
 2. Identify the best angle — find a gap in what competitors are covering, or a fresh take on a trending topic
-3. If needed, search deeper on your chosen angle using tavily_search or tavily_extract
+3. If needed, search deeper on your chosen angle using tavily_search to find URLs, then firecrawl_scrape to deeply read promising pages (prefer firecrawl_scrape over tavily_extract for richer content)
 4. Use score_lookup to check what topics have performed well in the past
 5. Write a compelling topic + script (hook → body → CTA)
 6. Self-critique: Is the hook strong enough? Would YOU stop scrolling for this? If not, revise.

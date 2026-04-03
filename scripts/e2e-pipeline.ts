@@ -225,7 +225,7 @@ async function preflight(dryRun: boolean): Promise<void> {
 // ── Pipeline stages ─────────────────────────────────────────────────
 
 async function stageResearch(state: PipelineState): Promise<void> {
-  const data = await apiCall("POST", "/pipeline/research", { niche: state.niche });
+  const data = await apiCall("POST", "/pipeline/research", { niche: state.niche }, 120_000);
   assertField(data, "research_brief_id", "string");
   assertField(data, "niche", "string");
   state.research_brief_id = data.research_brief_id as string;

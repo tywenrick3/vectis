@@ -17,6 +17,7 @@ const validEnv: Record<string, string> = {
   YOUTUBE_CLIENT_SECRET: "test-youtube-client-secret",
   YOUTUBE_REDIRECT_URI: "https://redirect.example.com/youtube/callback",
   TAVILY_API_KEY: "test-tavily-key",
+  FIRECRAWL_API_KEY: "test-firecrawl-key",
   OPENAI_API_KEY: "test-openai-key",
 };
 

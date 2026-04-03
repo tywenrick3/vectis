@@ -36,6 +36,9 @@ const envSchema = z.object({
   // Tavily
   TAVILY_API_KEY: z.string().min(1),
 
+  // Firecrawl
+  FIRECRAWL_API_KEY: z.string().min(1),
+
   // OpenAI (Whisper transcription)
   OPENAI_API_KEY: z.string().min(1),
 });

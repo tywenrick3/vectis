@@ -13,6 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@mendable/firecrawl-js": "^1.15.0",
     "@tavily/core": "^0.6.0",
     "@vectis/shared": "workspace:*"
   },

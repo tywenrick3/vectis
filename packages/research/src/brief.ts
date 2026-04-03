@@ -1,5 +1,6 @@
 import { getDb, createLogger, type ResearchBrief, type TrendingTopic, type NewsItem, type SourceItem } from "@vectis/shared";
-import { search, extract } from "./tavily.js";
+import { search } from "./tavily.js";
+import { batchScrape } from "./firecrawl.js";
 
 const log = createLogger("research:brief");
 
@@ -25,7 +26,7 @@ export async function buildResearchBrief(niche: string): Promise<ResearchBrief> 
     .map((r) => r.url);
 
   const extractedSources =
-    topSourceUrls.length > 0 ? await extract(topSourceUrls) : [];
+    topSourceUrls.length > 0 ? await batchScrape(topSourceUrls) : [];
 
   // Map to typed structures
   const trending_topics: TrendingTopic[] = trendingRaw.map((r) => ({
@@ -51,7 +52,7 @@ export async function buildResearchBrief(niche: string): Promise<ResearchBrief> 
   );
 
   const source_material: SourceItem[] = extractedSources.map((s) => ({
-    fact: s.content.slice(0, 500),
+    fact: s.markdown.slice(0, 2000),
     source_url: s.url,
     type: "data_point" as const,
   }));
