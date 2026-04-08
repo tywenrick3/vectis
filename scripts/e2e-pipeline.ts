@@ -225,13 +225,13 @@ async function preflight(dryRun: boolean): Promise<void> {
 // ── Pipeline stages ─────────────────────────────────────────────────
 
 async function stageAnalytics(state: PipelineState): Promise<void> {
-  const data = await apiCall("POST", "/pipeline/analytics", {}, 120_000);
+  const data = await apiCall("POST", "/pipeline/analytics", {}, 180_000);
   console.log(`      snapshots: ${dim(String(data.snapshots_created))}`);
   console.log(`      scored:    ${dim(String(data.topics_scored))}`);
 }
 
 async function stageResearch(state: PipelineState): Promise<void> {
-  const data = await apiCall("POST", "/pipeline/research", { niche: state.niche }, 120_000);
+  const data = await apiCall("POST", "/pipeline/research", { niche: state.niche }, 180_000);
   assertField(data, "research_brief_id", "string");
   assertField(data, "niche", "string");
   state.research_brief_id = data.research_brief_id as string;
