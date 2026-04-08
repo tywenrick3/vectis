@@ -92,7 +92,8 @@ describe("transcribe", () => {
 
     expect(result).toEqual(existing);
     // fetch should NOT have been called since we reused existing
-    expect(fetch).not.toHaveBeenCalled?.() ?? true;
+    vi.stubGlobal("fetch", vi.fn());
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("parses Whisper word timestamps to milliseconds correctly", async () => {

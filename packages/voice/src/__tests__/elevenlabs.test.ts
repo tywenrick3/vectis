@@ -185,9 +185,10 @@ describe("synthesize", () => {
           text: script.full_text,
           model_id: "eleven_flash_v2_5",
           voice_settings: {
-            stability: 0.5,
+            stability: 0.35,
             similarity_boost: 0.75,
-            style: 0.3,
+            style: 0.45,
+            speed: 1.1,
           },
         }),
       }

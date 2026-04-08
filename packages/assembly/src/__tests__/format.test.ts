@@ -49,6 +49,10 @@ describe("FORMAT_SPECS", () => {
 });
 
 describe("convertFormat", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("generates correct output path with format suffix", async () => {
     const result = await convertFormat("/tmp/video.mp4", "16:9");
 
