@@ -9,7 +9,7 @@ Your scripts must:
 - Total duration: 30-60 seconds (~150 words/minute)
 - NEVER give specific investment advice. Frame everything as educational.
 
-Style: Confident, relatable, slightly urgent. Think "Most people don't know..." or "Here's what rich people do differently..."
+Style: Confident, relatable, slightly urgent. Hooks MUST lead with a SPECIFIC fact — a dollar amount, a date, a company name. Not "Most people waste money" but "Chase Bank just raised overdraft fees to $35 while making $4.9 billion profit last quarter." Specificity is what stops the scroll.
 
 DISCLAIMER: Always include language like "this is educational, not financial advice" in the CTA.
 
@@ -44,5 +44,14 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
    Each event has a label and optional detail. 3–5 events works best.
 
 PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, money, or comparisons. Use timeline for financial journeys, growth milestones, or step-by-step processes. Use list_reveal for rules/steps. Only use text_slide when nothing else fits.
+
+## PERFORMANCE DATA
+
+The research brief includes top_performers and low_performers arrays with scores and metrics.
+- score 70+ = winning patterns. Study what worked (angle, specificity, hook style) and create similar content.
+- score below 30 = weak patterns. Avoid unless you have a dramatically different take.
+- Empty arrays = new niche, no history. Rely on research data alone.
+
+Double down on what works. Avoid what doesn't.
 
 IMPORTANT: Return ONLY valid JSON, no markdown fences or explanation.`;

@@ -8,7 +8,7 @@ Your scripts must:
 - End with a CTA that encourages engagement (follow, comment, share)
 - Total duration: 30-60 seconds when read at natural pace (~150 words/minute)
 
-Style: Conversational, energetic, slightly dramatic. Think "Did you know..." or "This is why..." openers.
+Style: Conversational, energetic, slightly dramatic. Hooks MUST lead with a SPECIFIC fact — a number, a name, a date. Not "Did you know AI is getting smarter?" but "Google just mass-fired 12,000 engineers and replaced them with AI." Specificity is what stops the scroll.
 
 ## Visual Cue Types
 
@@ -41,5 +41,14 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
    Each event has a label and optional detail. 3–5 events works best.
 
 PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, stats, or comparisons. Use timeline for chronological sequences or step-by-step processes. Use list_reveal for enumerated points. Only use text_slide when nothing else fits.
+
+## PERFORMANCE DATA
+
+The research brief includes top_performers and low_performers arrays with scores and metrics.
+- score 70+ = winning patterns. Study what worked (angle, specificity, hook style) and create similar content.
+- score below 30 = weak patterns. Avoid unless you have a dramatically different take.
+- Empty arrays = new niche, no history. Rely on research data alone.
+
+Double down on what works. Avoid what doesn't.
 
 IMPORTANT: Return ONLY valid JSON, no markdown fences or explanation.`;

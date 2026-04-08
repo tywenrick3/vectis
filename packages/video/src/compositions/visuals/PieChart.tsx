@@ -83,7 +83,8 @@ export const PieChart: React.FC<PieChartProps> = ({
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
-  const viewBox = `0 0 ${pie.width} ${pie.height}`;
+  const svgSize = radius * 2 + strokeWidth;
+  const viewBox = `${-strokeWidth / 2} ${-strokeWidth / 2} ${svgSize} ${svgSize}`;
 
   return (
     <AbsoluteFill
@@ -112,7 +113,7 @@ export const PieChart: React.FC<PieChartProps> = ({
       )}
 
       {/* Chart container */}
-      <div style={{ position: "relative", width: radius * 2, height: radius * 2 }}>
+      <div style={{ position: "relative", width: svgSize, height: svgSize }}>
         {/* Glow */}
         <div
           style={{
@@ -124,7 +125,7 @@ export const PieChart: React.FC<PieChartProps> = ({
           }}
         />
 
-        <svg width={radius * 2} height={radius * 2} viewBox={viewBox}>
+        <svg width={svgSize} height={svgSize} viewBox={viewBox}>
           {/* Background track */}
           <path
             d={track.path}

@@ -80,6 +80,25 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "check_uniqueness",
+    description:
+      "Check if a proposed topic title is too similar to recently published topics. Returns similar past titles. If the list is non-empty, pick a different angle.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        proposed_title: {
+          type: "string",
+          description: "The topic title you want to check for uniqueness",
+        },
+        niche: {
+          type: "string",
+          description: "The niche to check against",
+        },
+      },
+      required: ["proposed_title", "niche"],
+    },
+  },
+  {
     name: "submit_content",
     description:
       "Submit the final topic and script. Call this when you are satisfied with the content quality.",
@@ -176,6 +195,39 @@ async function handleToolCall(
         .limit(limit);
       return JSON.stringify(data ?? []);
     }
+    case "check_uniqueness": {
+      const db = getDb();
+      const { data: recent } = await db
+        .from("topics")
+        .select("title, description, created_at")
+        .eq("niche", input.niche as string)
+        .eq("used", true)
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (!recent || recent.length === 0) {
+        return JSON.stringify({ similar: [], message: "No prior topics found. You're clear." });
+      }
+
+      const proposed = (input.proposed_title as string).toLowerCase();
+      const proposedWords = new Set(proposed.split(/\s+/).filter(w => w.length > 3));
+
+      const similar = recent.filter((t: { title: string }) => {
+        const titleWords = new Set(t.title.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+        const overlap = [...proposedWords].filter(w => titleWords.has(w)).length;
+        return overlap >= 2;
+      });
+
+      return JSON.stringify({
+        similar: similar.map((t: { title: string; created_at: string }) => ({
+          title: t.title,
+          created_at: t.created_at,
+        })),
+        message: similar.length > 0
+          ? `Found ${similar.length} similar past topics. Choose a more distinct angle.`
+          : "No similar topics found. This angle is fresh.",
+      });
+    }
     case "submit_content": {
       // This is handled by the caller, not here
       return JSON.stringify({ status: "submitted" });
@@ -205,18 +257,50 @@ export async function runIdeationAgent(
 You are an ideation agent for a short-form video content pipeline. You have been given a research brief with trending topics, news, competitor angles, and saturation signals for the "${brief.niche}" niche.
 
 Your job:
-1. Review the research brief carefully
-2. Identify the best angle — find a gap in what competitors are covering, or a fresh take on a trending topic
-3. If needed, search deeper on your chosen angle using tavily_search to find URLs, then firecrawl_scrape to deeply read promising pages (prefer firecrawl_scrape over tavily_extract for richer content)
-4. Use score_lookup to check what topics have performed well in the past
+1. FIRST: Call score_lookup to review past topic performance — this is MANDATORY before choosing any angle
+2. Review the research brief carefully — study top_performers (winning patterns), low_performers (avoid these), recently_covered (already published), and saturation_signals (played out)
+3. Identify the best angle — find a gap or fresh take that ALIGNS with patterns from top-performing topics
+4. If needed, search deeper on your chosen angle using tavily_search to find URLs, then firecrawl_scrape to deeply read promising pages (prefer firecrawl_scrape over tavily_extract for richer content)
 5. Write a compelling topic + script (hook → body → CTA)
-6. Self-critique: Is the hook strong enough? Would YOU stop scrolling for this? If not, revise.
-7. Generate hashtags and a caption
-8. Submit the final content using the submit_content tool
+6. Use check_uniqueness to verify your topic hasn't been covered before
+7. Self-critique: Is the hook strong enough? Does it contain a concrete fact? Does it align with what performed well? If not, revise.
+8. Generate hashtags and a caption
+9. Submit the final content using the submit_content tool
+
+## PERFORMANCE-INFORMED DECISIONS (MANDATORY)
+
+You MUST call score_lookup before choosing your angle. This is not optional.
+
+The research brief includes top_performers and low_performers with actual metrics:
+- score: 0-100 composite engagement score. Higher = better.
+- Topics 70+ = WINNING patterns. Create content in a similar vein (same format, similar specificity, related themes).
+- Topics below 30 = UNDERPERFORMERS. Avoid similar angles.
+- High comments relative to views = the topic sparked discussion. Lean into controversial/surprising angles.
+
+If score_lookup returns no data or performance arrays are empty, this niche has no history yet — rely on research data and interestingness criteria.
+
+## INTERESTINGNESS CRITERIA — Apply these to every topic idea
+
+PREFER topics that have:
+- A specific, named event, product, person, or company (not "AI" but "Claude Code", not "crypto" but "Solana's outage")
+- A concrete number, date, or data point in the hook (not "millions" but "347 million")
+- A leak, behind-the-scenes revelation, or "I bet you didn't know" fact
+- A surprising reversal or counterintuitive finding ("X was supposed to Y, but actually Z")
+- A recency anchor — something that happened THIS week, not a timeless trend
+
+REJECT topics that are:
+- Broad trend commentary ("AI is changing everything", "The future of work", "How agents will transform X")
+- Vague futures with no concrete evidence ("X will transform Y by 2030")
+- Generic listicles ("5 ways to...", "Top 10...")
+- Already covered — check recently_covered in the brief and use check_uniqueness before submitting
+
+HOOK RULE: The hook MUST contain a concrete fact, specific number, or named entity. Rhetorical questions alone ("Did you know...?", "What if I told you...?") are NOT acceptable hooks.
+Good: "NASA just mass-deleted their entire moon base blueprint — and rebuilt it in 6 weeks."
+Bad: "What if we could live on the moon someday?"
 
 IMPORTANT:
-- The hook MUST create curiosity or surprise in the first 2-3 seconds
 - Avoid angles listed in saturation_signals — those are played out
+- NEVER repeat topics from recently_covered — those have already been published
 - Total script should be 30-60 seconds when read aloud (~150 words/minute)
 - You MUST call submit_content to complete your task`;
 

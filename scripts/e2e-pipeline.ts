@@ -224,6 +224,12 @@ async function preflight(dryRun: boolean): Promise<void> {
 
 // ── Pipeline stages ─────────────────────────────────────────────────
 
+async function stageAnalytics(state: PipelineState): Promise<void> {
+  const data = await apiCall("POST", "/pipeline/analytics", {}, 120_000);
+  console.log(`      snapshots: ${dim(String(data.snapshots_created))}`);
+  console.log(`      scored:    ${dim(String(data.topics_scored))}`);
+}
+
 async function stageResearch(state: PipelineState): Promise<void> {
   const data = await apiCall("POST", "/pipeline/research", { niche: state.niche }, 120_000);
   assertField(data, "research_brief_id", "string");
@@ -419,7 +425,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const totalStages = dryRun ? 5 : 7;
+  const totalStages = dryRun ? 6 : 8;
 
   const sep = "=".repeat(50);
   console.log(bold(sep));
@@ -436,18 +442,27 @@ async function main(): Promise<void> {
 
   await preflight(dryRun);
 
-  await runStage(1, totalStages, "research", state, stageResearch);
-  await runStage(2, totalStages, "ideate", state, stageIdeate);
-  await runStage(3, totalStages, "voice", state, stageVoice);
-  await runStage(4, totalStages, "render", state, stageRender);
-  await runStage(5, totalStages, "assemble", state, stageAssemble);
+  // Analytics runs first to ensure fresh performance data for ideation.
+  // Non-fatal: if no published videos exist yet, the pipeline continues.
+  try {
+    await runStage(1, totalStages, "analytics", state, stageAnalytics);
+  } catch {
+    console.log(`  ${yellow("Analytics stage failed (non-fatal) — continuing")}`);
+    results.push({ name: "analytics", elapsed: 0, skipped: true });
+  }
+
+  await runStage(2, totalStages, "research", state, stageResearch);
+  await runStage(3, totalStages, "ideate", state, stageIdeate);
+  await runStage(4, totalStages, "voice", state, stageVoice);
+  await runStage(5, totalStages, "render", state, stageRender);
+  await runStage(6, totalStages, "assemble", state, stageAssemble);
 
   if (dryRun) {
-    skipStage(6, totalStages, "publish");
-    skipStage(7, totalStages, "record-run");
+    skipStage(7, totalStages, "publish");
+    skipStage(8, totalStages, "record-run");
   } else {
-    await runStage(6, totalStages, "publish", state, stagePublish);
-    await runStage(7, totalStages, "record-run", state, stageRecordRun);
+    await runStage(7, totalStages, "publish", state, stagePublish);
+    await runStage(8, totalStages, "record-run", state, stageRecordRun);
   }
 
   printSummary(totalStart, dryRun);

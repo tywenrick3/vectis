@@ -11,9 +11,14 @@ vi.mock("@vectis/shared", () => ({
   })),
 }));
 
-const { mockSearch, mockBatchScrape } = vi.hoisted(() => ({
+const { mockSearch, mockBatchScrape, mockGetPerformanceContext } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
   mockBatchScrape: vi.fn(),
+  mockGetPerformanceContext: vi.fn(),
+}));
+
+vi.mock("@vectis/analytics", () => ({
+  getPerformanceContext: mockGetPerformanceContext,
 }));
 
 vi.mock("../tavily.js", () => ({
@@ -53,7 +58,7 @@ function createMockDb(
 ) {
   function buildChain(resolveValue: { data: unknown; error: unknown }) {
     const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-    const methods = ["from", "insert", "update", "upsert", "eq", "order", "limit"];
+    const methods = ["from", "insert", "update", "upsert", "eq", "order", "limit", "in"];
     for (const m of methods) {
       chain[m] = vi.fn().mockReturnValue(chain);
     }
@@ -62,6 +67,8 @@ function createMockDb(
       ...chain,
       single: vi.fn().mockResolvedValue(resolveValue),
     });
+    // Make the chain thenable so `await db.from(...).select(...).eq(...)...limit(N)` works
+    chain.then = vi.fn((resolve: (v: unknown) => void) => resolve(resolveValue));
     return chain;
   }
 
@@ -83,21 +90,27 @@ function createMockDb(
 describe("buildResearchBrief", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetPerformanceContext.mockResolvedValue({
+      recently_covered: [],
+      top_performers: [],
+      low_performers: [],
+    });
   });
 
-  it("runs 5 parallel searches for the niche", async () => {
+  it("runs 7 parallel searches for the niche", async () => {
     mockSearch.mockResolvedValue([makeSearchResult()]);
     mockBatchScrape.mockResolvedValue([]);
 
     const briefRow = { id: "brief-1", niche: "tech-explainer" };
     const mockDb = createMockDb({
       research_briefs: { data: briefRow, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
     await buildResearchBrief("tech-explainer");
 
-    expect(mockSearch).toHaveBeenCalledTimes(5);
+    expect(mockSearch).toHaveBeenCalledTimes(7);
     // All search queries should mention the niche
     for (const call of mockSearch.mock.calls) {
       expect(call[0]).toContain("tech-explainer");
@@ -129,6 +142,7 @@ describe("buildResearchBrief", () => {
     };
     const mockDb = createMockDb({
       research_briefs: { data: briefRow, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
@@ -154,6 +168,7 @@ describe("buildResearchBrief", () => {
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
@@ -162,35 +177,40 @@ describe("buildResearchBrief", () => {
     const insertCall = mockDb.from("research_briefs").insert as ReturnType<typeof vi.fn>;
     const insertArg = insertCall.mock.calls[0][0];
 
-    // All 5 search calls return the same results; recent_news comes from index 1
     expect(insertArg.recent_news[0].summary).toHaveLength(300);
   });
 
-  it("only extracts sources with score > 0.5", async () => {
-    const highScore = makeSearchResult({ score: 0.9, url: "https://high.com" });
+  it("scrapes top URLs from all categories (score > 0.5, deduped, max 8)", async () => {
+    const highScore1 = makeSearchResult({ score: 0.9, url: "https://high1.com" });
+    const highScore2 = makeSearchResult({ score: 0.8, url: "https://high2.com" });
     const lowScore = makeSearchResult({ score: 0.3, url: "https://low.com" });
+    const duplicate = makeSearchResult({ score: 0.7, url: "https://high1.com" }); // same URL as highScore1
 
-    // 4 searches return empty, 5th (sources) returns high and low
+    // Each of 7 searches returns different results
     mockSearch
-      .mockResolvedValueOnce([]) // trending
-      .mockResolvedValueOnce([]) // news
-      .mockResolvedValueOnce([]) // competitor
-      .mockResolvedValueOnce([]) // saturation
-      .mockResolvedValueOnce([highScore, lowScore]); // sources
+      .mockResolvedValueOnce([highScore1])       // trending
+      .mockResolvedValueOnce([highScore2])        // news
+      .mockResolvedValueOnce([lowScore])          // competitor
+      .mockResolvedValueOnce([])                  // saturation
+      .mockResolvedValueOnce([duplicate])         // source (duplicate URL)
+      .mockResolvedValueOnce([])                  // insider
+      .mockResolvedValueOnce([]);                 // events
 
     mockBatchScrape.mockResolvedValue([
-      { url: "https://high.com", markdown: "Extracted content" },
+      { url: "https://high1.com", markdown: "Content 1" },
+      { url: "https://high2.com", markdown: "Content 2" },
     ]);
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
     await buildResearchBrief("tech-explainer");
 
-    // batchScrape should only be called with high-score URLs
-    expect(mockBatchScrape).toHaveBeenCalledWith(["https://high.com"]);
+    // Should scrape high1 (0.9) and high2 (0.8), skip low (0.3), dedupe duplicate
+    expect(mockBatchScrape).toHaveBeenCalledWith(["https://high1.com", "https://high2.com"]);
   });
 
   it("skips extraction when no sources score > 0.5", async () => {
@@ -199,17 +219,41 @@ describe("buildResearchBrief", () => {
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
     await buildResearchBrief("tech-explainer");
 
-    // The 5th search returns score 0.2, so no extraction
-    // But since all 5 return the same mock, the last one has score 0.2
-    // Actually: mockSearch.mockResolvedValue applies to all calls
-    // So all 5 return [{score: 0.2}], which means sources have score 0.2
-    // Therefore extract should not be called
     expect(mockBatchScrape).not.toHaveBeenCalled();
+  });
+
+  it("includes recently_covered from performance context on returned brief", async () => {
+    mockSearch.mockResolvedValue([]);
+    mockBatchScrape.mockResolvedValue([]);
+
+    const recentTopics = [
+      { title: "Old Topic 1", description: "desc 1" },
+      { title: "Old Topic 2", description: "desc 2" },
+    ];
+
+    mockGetPerformanceContext.mockResolvedValue({
+      recently_covered: recentTopics,
+      top_performers: [],
+      low_performers: [],
+    });
+
+    const mockDb = createMockDb({
+      research_briefs: { data: { id: "b-1" }, error: null },
+    });
+    vi.mocked(getDb).mockReturnValue(mockDb as any);
+
+    const brief = await buildResearchBrief("tech-explainer");
+
+    expect(brief.recently_covered).toEqual([
+      { title: "Old Topic 1", description: "desc 1" },
+      { title: "Old Topic 2", description: "desc 2" },
+    ]);
   });
 
   it("throws when DB insert fails", async () => {
@@ -221,6 +265,7 @@ describe("buildResearchBrief", () => {
         data: null,
         error: { message: "insert failed" },
       },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 
@@ -236,6 +281,7 @@ describe("buildResearchBrief", () => {
 
     const mockDb = createMockDb({
       research_briefs: { data: { id: "b-1" }, error: null },
+      topics: { data: [], error: null },
     });
     vi.mocked(getDb).mockReturnValue(mockDb as any);
 

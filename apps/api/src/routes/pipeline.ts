@@ -5,8 +5,8 @@ import { runIdeationAgent } from "@vectis/ideation";
 import { synthesize } from "@vectis/voice";
 import { renderVideo } from "@vectis/video";
 import { assemble } from "@vectis/assembly";
-import { publishToTikTok, publishToYouTube } from "@vectis/publisher";
-import { ingestMetrics, scoreTopics } from "@vectis/analytics";
+import { publishToTikTok, publishToYouTube, refreshYouTubeToken } from "@vectis/publisher";
+import { ingestMetrics, ingestYouTubeMetrics, scoreTopics, getPerformanceContext } from "@vectis/analytics";
 
 const log = createLogger("route:pipeline");
 
@@ -49,6 +49,12 @@ pipelineRoute.post("/ideate", async (c) => {
       .single();
 
     if (error || !brief) throw new Error("Research brief not found");
+
+    // Augment brief with computed fields not persisted to DB
+    const perfContext = await getPerformanceContext(brief.niche);
+    brief.recently_covered = perfContext.recently_covered;
+    brief.top_performers = perfContext.top_performers;
+    brief.low_performers = perfContext.low_performers;
 
     const { topic, script } = await runIdeationAgent(brief);
 
@@ -281,12 +287,32 @@ pipelineRoute.post("/analytics", async (c) => {
   const db = getDb();
 
   try {
-    const snapshots = await ingestMetrics();
+    const tiktokSnapshots = await ingestMetrics();
+
+    let ytSnapshots: Awaited<ReturnType<typeof ingestYouTubeMetrics>> = [];
+    try {
+      const ytCreds = await refreshYouTubeToken();
+      ytSnapshots = await ingestYouTubeMetrics(ytCreds.access_token);
+    } catch (err) {
+      log.warn({ error: err }, "YouTube ingestion skipped");
+    }
+
+    const allSnapshots = [...tiktokSnapshots, ...ytSnapshots];
     const scored = await scoreTopics();
 
-    await logStage(db, run_id, "analytics", "completed", {}, { snapshots_created: snapshots.length, topics_scored: scored });
+    await logStage(db, run_id, "analytics", "completed", {}, {
+      snapshots_created: allSnapshots.length,
+      tiktok_snapshots: tiktokSnapshots.length,
+      youtube_snapshots: ytSnapshots.length,
+      topics_scored: scored,
+    });
 
-    return c.json({ snapshots_created: snapshots.length, topics_scored: scored });
+    return c.json({
+      snapshots_created: allSnapshots.length,
+      tiktok_snapshots: tiktokSnapshots.length,
+      youtube_snapshots: ytSnapshots.length,
+      topics_scored: scored,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     await logStage(db, run_id, "analytics", "failed", {}, null, message);

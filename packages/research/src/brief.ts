@@ -1,34 +1,84 @@
 import { getDb, createLogger, type ResearchBrief, type TrendingTopic, type NewsItem, type SourceItem } from "@vectis/shared";
-import { search } from "./tavily.js";
-import { batchScrape } from "./firecrawl.js";
+import { getPerformanceContext } from "@vectis/analytics";
+import { search, type TavilySearchResult } from "./tavily.js";
+import { batchScrape, scrape } from "./firecrawl.js";
 
 const log = createLogger("research:brief");
+
+type QueryCategory = "trending" | "news" | "competitor" | "saturation" | "source" | "insider" | "events";
+
+interface TaggedQuery {
+  category: QueryCategory;
+  query: string;
+}
+
+function getResearchQueries(niche: string): TaggedQuery[] {
+  return [
+    { category: "trending", query: `${niche} viral moment breakthrough this week 2025 2026` },
+    { category: "news", query: `latest ${niche} news specific event announcement this week` },
+    { category: "competitor", query: `top ${niche} creators TikTok YouTube Shorts viral videos this month` },
+    { category: "saturation", query: `most common ${niche} video topics oversaturated played out boring` },
+    { category: "source", query: `${niche} surprising statistic data point nobody knows 2025 2026` },
+    { category: "insider", query: `${niche} behind the scenes insider revelation secret leaked 2025 2026` },
+    { category: "events", query: `${niche} controversy scandal unexpected failure drama this month` },
+  ];
+}
 
 export async function buildResearchBrief(niche: string): Promise<ResearchBrief> {
   const db = getDb();
 
   log.info({ niche }, "Building research brief");
 
-  // Run all 5 search types in parallel
-  const [trendingRaw, newsRaw, competitorRaw, saturationRaw, sourceRaw] =
-    await Promise.all([
-      search(`trending ${niche} short-form video topics 2024 2025`, 5),
-      search(`latest news ${niche} today this week`, 5),
-      search(`top ${niche} creators TikTok YouTube Shorts viral videos`, 5),
-      search(`most common ${niche} video topics oversaturated played out`, 5),
-      search(`${niche} surprising facts statistics data points 2024 2025`, 5),
-    ]);
+  const queries = getResearchQueries(niche);
 
-  // Extract source material from top results
-  const topSourceUrls = sourceRaw
-    .filter((r) => r.score > 0.5)
-    .slice(0, 3)
-    .map((r) => r.url);
+  // Run all searches in parallel
+  const rawResults = await Promise.all(
+    queries.map((q) => search(q.query, 5))
+  );
 
-  const extractedSources =
-    topSourceUrls.length > 0 ? await batchScrape(topSourceUrls) : [];
+  // Tag results by category
+  const resultsByCategory = new Map<QueryCategory, TavilySearchResult[]>();
+  for (let i = 0; i < queries.length; i++) {
+    resultsByCategory.set(queries[i].category, rawResults[i]);
+  }
+
+  // Collect top URLs from ALL categories for scraping (deduplicated, score > 0.5, max 8)
+  const urlScores = new Map<string, number>();
+  for (const results of rawResults) {
+    for (const r of results) {
+      if (r.score > 0.5 && (!urlScores.has(r.url) || urlScores.get(r.url)! < r.score)) {
+        urlScores.set(r.url, r.score);
+      }
+    }
+  }
+  const topScrapeUrls = [...urlScores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([url]) => url);
+
+  let extractedSources: Awaited<ReturnType<typeof batchScrape>> = [];
+  if (topScrapeUrls.length > 0) {
+    try {
+      extractedSources = await batchScrape(topScrapeUrls);
+    } catch (err) {
+      log.warn({ err, urls: topScrapeUrls }, "Batch scrape failed, falling back to individual scrapes");
+      for (const url of topScrapeUrls) {
+        try {
+          const result = await scrape(url);
+          extractedSources.push(result);
+        } catch (innerErr) {
+          log.warn({ err: innerErr, url }, "Scrape failed for URL, skipping");
+        }
+      }
+    }
+  }
 
   // Map to typed structures
+  const trendingRaw = resultsByCategory.get("trending") ?? [];
+  const newsRaw = resultsByCategory.get("news") ?? [];
+  const competitorRaw = resultsByCategory.get("competitor") ?? [];
+  const saturationRaw = resultsByCategory.get("saturation") ?? [];
+
   const trending_topics: TrendingTopic[] = trendingRaw.map((r) => ({
     title: r.title,
     source: r.url,
@@ -57,7 +107,11 @@ export async function buildResearchBrief(niche: string): Promise<ResearchBrief> 
     type: "data_point" as const,
   }));
 
-  // Store in Supabase
+  // Fetch performance context (recently covered, top/low performers)
+  const { recently_covered, top_performers, low_performers } =
+    await getPerformanceContext(niche);
+
+  // Store in Supabase (recently_covered is derived, not persisted)
   const { data, error } = await db
     .from("research_briefs")
     .insert({
@@ -80,9 +134,10 @@ export async function buildResearchBrief(niche: string): Promise<ResearchBrief> 
       trends: trending_topics.length,
       news: recent_news.length,
       sources: source_material.length,
+      recentlyCovered: recently_covered.length,
     },
     "Research brief built"
   );
 
-  return data as ResearchBrief;
+  return { ...data, recently_covered, top_performers, low_performers } as ResearchBrief;
 }

@@ -157,6 +157,15 @@ export interface TikTokCredentials {
   updated_at: string;
 }
 
+export interface TopicPerformance {
+  title: string;
+  description: string;
+  score: number;
+  views: number;
+  likes: number;
+  comments: number;
+}
+
 export interface AnalyticsSnapshot {
   id: string;
   pipeline_run_id: string;
@@ -209,6 +218,9 @@ export interface ResearchBrief {
   competitor_angles: string[];
   saturation_signals: string[];
   source_material: SourceItem[];
+  recently_covered: { title: string; description: string }[];
+  top_performers?: TopicPerformance[];
+  low_performers?: TopicPerformance[];
   searched_at: string;
 }
 

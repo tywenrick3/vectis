@@ -16,6 +16,26 @@
     {
       "parameters": {
         "method": "POST",
+        "url": "={{ $env.VECTIS_API_URL }}/pipeline/analytics",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{ $env.VECTIS_API_KEY }}" }]
+        },
+        "options": { "timeout": 120000 }
+      },
+      "id": "analytics-ingest",
+      "name": "Ingest Analytics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
         "url": "={{ $env.VECTIS_API_URL }}/pipeline/research",
         "sendHeaders": true,
         "headerParameters": {
@@ -31,7 +51,7 @@
       "name": "Research",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 0],
+      "position": [440, 0],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -53,7 +73,7 @@
       "name": "Ideation Agent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 0],
+      "position": [660, 0],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 10000
@@ -75,7 +95,7 @@
       "name": "Voice Synthesis",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [660, 0],
+      "position": [880, 0],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -97,7 +117,7 @@
       "name": "Video Render",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, 0],
+      "position": [1100, 0],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 10000
@@ -119,7 +139,7 @@
       "name": "Publish to YouTube",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, 0],
+      "position": [1320, 0],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 15000
@@ -141,7 +161,7 @@
       "name": "Record Run",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1320, 0]
+      "position": [1540, 0]
     },
     {
       "parameters": {
@@ -151,11 +171,14 @@
       "name": "Error Handler",
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
-      "position": [660, 220]
+      "position": [880, 220]
     }
   ],
   "connections": {
     "Daily Trigger": {
+      "main": [[{ "node": "Ingest Analytics", "type": "main", "index": 0 }]]
+    },
+    "Ingest Analytics": {
       "main": [[{ "node": "Research", "type": "main", "index": 0 }]]
     },
     "Research": {

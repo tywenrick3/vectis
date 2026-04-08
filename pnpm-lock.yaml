@@ -133,6 +133,9 @@ importers:
       '@tavily/core':
         specifier: ^0.6.0
         version: 0.6.4
+      '@vectis/analytics':
+        specifier: workspace:*
+        version: link:../analytics
       '@vectis/shared':
         specifier: workspace:*
         version: link:../shared
