@@ -292,6 +292,7 @@ async function stageAssemble(state: PipelineState): Promise<void> {
       script_id: state.script_id,
       video_id: state.video_id,
       voice_asset_id: state.voice_asset_id,
+      include_hook_variants: true,
     },
     300_000, // 5 min timeout
   );
@@ -299,7 +300,8 @@ async function stageAssemble(state: PipelineState): Promise<void> {
   assertField(data, "jobs", "array");
   state.assembly_job_ids = data.assembly_job_ids as string[];
   state.primary_output_url = (data.primary_output_url as string | null) ?? null;
-  console.log(`      assembly_job_ids:  ${dim(JSON.stringify(state.assembly_job_ids))}`);
+  const jobCount = state.assembly_job_ids.length;
+  console.log(`      assembly_jobs:      ${dim(`${jobCount} (1 primary${jobCount > 1 ? ` + ${jobCount - 1} hook variants` : ""})`)}`);
   console.log(`      primary_output_url: ${dim(String(state.primary_output_url))}`);
 }
 

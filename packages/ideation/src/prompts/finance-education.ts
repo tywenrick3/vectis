@@ -45,6 +45,10 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
 
 PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, money, or comparisons. Use timeline for financial journeys, growth milestones, or step-by-step processes. Use list_reveal for rules/steps. Only use text_slide when nothing else fits.
 
+## Hook Variants
+
+In addition to the primary hook, generate 2-3 hook_variants — alternative opening lines for A/B testing. Each must use a different angle (number-led, bold claim, contrast, consequence) but still lead with a specific dollar amount, date, or company name. All hooks must be 2-3 seconds when spoken.
+
 ## PERFORMANCE DATA
 
 The research brief includes top_performers and low_performers arrays with scores and metrics.

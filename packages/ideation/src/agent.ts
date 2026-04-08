@@ -118,6 +118,12 @@ const TOOLS: Anthropic.Tool[] = [
           description:
             "Opening line that grabs attention (2-3 seconds when spoken)",
         },
+        hook_variants: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "2-3 alternative opening hooks for A/B testing. Each must be a different angle/format from the primary hook — e.g. a number-led hook, a bold claim hook, a contrast hook.",
+        },
         body: {
           type: "array",
           items: {
@@ -152,6 +158,7 @@ const TOOLS: Anthropic.Tool[] = [
         "title",
         "description",
         "hook",
+        "hook_variants",
         "body",
         "cta",
         "caption",
@@ -298,6 +305,21 @@ HOOK RULE: The hook MUST contain a concrete fact, specific number, or named enti
 Good: "NASA just mass-deleted their entire moon base blueprint — and rebuilt it in 6 weeks."
 Bad: "What if we could live on the moon someday?"
 
+## HOOK VARIANTS (REQUIRED)
+
+Generate 2-3 alternative hooks in hook_variants. Each variant must:
+- Use a DIFFERENT angle or format from the primary hook
+- Still follow the hook rule (concrete fact, specific number, or named entity)
+- Be roughly the same length (2-3 seconds spoken)
+
+Vary the approach across variants. Example strategies:
+- Number-led: "347 million passwords were just leaked..."
+- Bold claim: "Your phone is lying to you about battery health."
+- Contrast/reversal: "Google spent $30B on AI — and it made search worse."
+- Consequence: "If you're still using SMS, your bank account is exposed."
+
+The primary hook should be your strongest. Variants are for A/B testing.
+
 IMPORTANT:
 - Avoid angles listed in saturation_signals — those are played out
 - NEVER repeat topics from recently_covered — those have already been published
@@ -419,6 +441,7 @@ Analyze this research and create the best possible short-form video content. Use
     .insert({
       topic_id: topic.id,
       hook: submitted.hook as string,
+      hook_variants: (submitted.hook_variants as string[]) ?? [],
       body: submitted.body,
       cta: submitted.cta as string,
       full_text: fullText,

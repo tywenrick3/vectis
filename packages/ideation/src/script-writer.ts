@@ -25,6 +25,7 @@ export async function writeScript(topic: Topic): Promise<Script> {
 Return JSON:
 {
   "hook": "opening line that grabs attention (2-3 seconds)",
+  "hook_variants": ["alternative hook 1 (different angle)", "alternative hook 2 (different angle)"],
   "body": [
     {
       "narration": "what to say",
@@ -36,6 +37,8 @@ Return JSON:
   "caption": "post caption for TikTok",
   "hashtags": ["tag1", "tag2"]
 }
+
+hook_variants: 2-3 alternative hooks for A/B testing. Each must use a different angle (number-led, bold claim, contrast, consequence) from the primary hook.
 
 visual_cue must be a JSON object. Available types: animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide, pie_chart, timeline. See system prompt for full schemas.`,
       },
@@ -75,6 +78,7 @@ visual_cue must be a JSON object. Available types: animated_counter, bar_chart, 
     .insert({
       topic_id: topic.id,
       hook: parsed.hook,
+      hook_variants: parsed.hook_variants ?? [],
       body: parsed.body,
       cta: parsed.cta,
       full_text: fullText,
