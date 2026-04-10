@@ -119,10 +119,10 @@ Replaced text-on-black-background compositions with programmatic data visualizat
 
 ## Phase 3: Growth & Polish — NEXT
 
-### 3.1 Fix failing tests
-- [ ] Update `packages/voice` test to match current voice settings (stability 0.35, style 0.45, speed 1.1)
-- [ ] Fix `packages/assembly` format test (crop calculation assertion)
-- [ ] Fix `packages/assembly` transcribe dedup test (broken fetch spy assertion)
+### 3.1 Fix failing tests — DONE
+- [x] Update `packages/voice` test to match current voice settings (stability 0.35, style 0.45, speed 1.1)
+- [x] Fix `packages/assembly` format test (crop calculation assertion)
+- [x] Fix `packages/assembly` transcribe dedup test (broken fetch spy assertion)
 
 ### 3.2 Hook variant generation
 - [ ] Update ideation agent prompt to generate 2-3 hook variants per script

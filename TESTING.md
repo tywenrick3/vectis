@@ -5,7 +5,7 @@
 1. **Server running**: `pnpm dev` from project root (runs on port 3001)
 2. **All env vars set** in `.env` (see checklist below)
 3. **YouTube OAuth completed**: Visit `http://localhost:3001/youtube/auth` in browser first
-4. **Supabase migrations applied**: All 3 migrations (13 tables)
+4. **Supabase migrations applied**: All 4 migrations (~15 tables)
 5. **ElevenLabs**: Starter plan or higher (free tier blocks API voice synthesis)
 6. **R2**: Public access enabled via R2.dev subdomain
 
@@ -29,6 +29,7 @@ YOUTUBE_CLIENT_ID=<id>
 YOUTUBE_CLIENT_SECRET=<secret>
 YOUTUBE_REDIRECT_URI=http://localhost:3001/youtube/callback
 TAVILY_API_KEY=<key>
+FIRECRAWL_API_KEY=<key>
 ```
 
 ---

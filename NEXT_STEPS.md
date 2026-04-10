@@ -6,14 +6,14 @@
 
 ## Immediate (this week)
 
-### 1. Fix 3 failing tests
-- `packages/voice` — update `elevenlabs.test.ts` to match current voice settings (stability 0.35, style 0.45, speed 1.1)
-- `packages/assembly` — fix `format.test.ts` crop calculation assertion for 1:1 center-crop
-- `packages/assembly` — fix `transcribe.test.ts` fetch spy setup in dedup test path
+### ~~1. Fix 3 failing tests~~ — DONE
+- ~~`packages/voice` — update `elevenlabs.test.ts` to match current voice settings (stability 0.35, style 0.45, speed 1.1)~~
+- ~~`packages/assembly` — fix `format.test.ts` crop calculation assertion for 1:1 center-crop~~
+- ~~`packages/assembly` — fix `transcribe.test.ts` fetch spy setup in dedup test path~~
 
-### 2. Commit uncommitted e2e timeout change
-- `scripts/e2e-pipeline.ts` has a 2-line diff: analytics + research timeouts bumped 120s → 180s
-- Commit it so git status is clean
+### ~~2. Commit uncommitted e2e timeout change~~ — DONE
+- ~~`scripts/e2e-pipeline.ts` has a 2-line diff: analytics + research timeouts bumped 120s → 180s~~
+- ~~Committed — git status is clean~~
 
 ### 3. Run more videos and evaluate quality
 - Run the pipeline 3-5 more times across both niches

@@ -4,7 +4,7 @@
 // Deletes ALL objects from the configured R2 bucket.
 // Usage: pnpm purge-r2 [--force]
 
-import { listR2Objects, deleteFromR2Batch } from "@vectis/shared";
+import { listR2Objects, deleteFromR2Batch } from "../packages/shared/src/index.js";
 import * as readline from "node:readline";
 
 // ── ANSI helpers ────────────────────────────────────────────────────
