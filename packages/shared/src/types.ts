@@ -78,12 +78,17 @@ export function isStructuredCue(cue: string | VisualCue): cue is VisualCue {
   return typeof cue === "object" && cue !== null && "type" in cue;
 }
 
+// --- Transition Styles ---
+
+export type TransitionStyle = "fade" | "cut" | "zoom_in" | "slide_left" | "smash";
+
 // --- Script ---
 
 export interface ScriptSegment {
   narration: string;
   visual_cue: string | VisualCue;
   duration_estimate_ms: number;
+  transition?: TransitionStyle;
 }
 
 export interface Script {

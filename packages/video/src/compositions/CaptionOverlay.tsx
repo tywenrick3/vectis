@@ -14,7 +14,7 @@ interface CaptionOverlayProps {
   style: CaptionStyle;
 }
 
-const WORDS_VISIBLE = 5;
+const WORDS_VISIBLE = 3;
 
 export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ words, style }) => {
   const frame = useCurrentFrame();
@@ -66,7 +66,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ words, style }) 
       style={{
         justifyContent: "flex-end",
         alignItems: "center",
-        paddingBottom: 180,
+        paddingBottom: 480,
         opacity,
       }}
     >
@@ -98,7 +98,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ words, style }) 
               : 0;
 
           const scale = isActive
-            ? interpolate(wordProgress, [0, 1], [1, 1.15])
+            ? interpolate(wordProgress, [0, 1], [1, 1.3])
             : 1;
 
           return (
@@ -111,6 +111,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ words, style }) 
                 fontFamily: "Inter, sans-serif",
                 transform: `scale(${scale})`,
                 transition: "color 0.05s",
+                textShadow: "0 2px 8px rgba(0, 0, 0, 0.7)",
               }}
             >
               {w.word}

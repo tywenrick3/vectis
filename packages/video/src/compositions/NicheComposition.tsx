@@ -101,7 +101,10 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
             from={startFrame}
             durationInFrames={segmentFrames}
           >
-            <SegmentTransition durationInFrames={segmentFrames}>
+            <SegmentTransition
+              durationInFrames={segmentFrames}
+              style={segment.transition}
+            >
               <SegmentRenderer
                 visualCue={segment.visual_cue}
                 narration={segment.narration}

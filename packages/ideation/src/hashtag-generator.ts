@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getEnv, createLogger } from "@vectis/shared";
+import { getEnv, createLogger, MODELS } from "@vectis/shared";
 
 const log = createLogger("ideation:hashtags");
 
@@ -14,7 +14,7 @@ export async function generateHashtags(
   log.info({ title, niche }, "Generating hashtags");
 
   const response = await client.messages.create({
-    model: "claude-opus-4-6",
+    model: MODELS.hashtagGenerator,
     max_tokens: 512,
     messages: [
       {

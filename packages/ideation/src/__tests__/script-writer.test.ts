@@ -11,17 +11,21 @@ vi.mock("@anthropic-ai/sdk", () => {
   };
 });
 
-vi.mock("@vectis/shared", () => ({
-  getEnv: vi.fn(() => ({
-    ANTHROPIC_API_KEY: "test-key",
-  })),
-  getDb: vi.fn(),
-  createLogger: vi.fn(() => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
+vi.mock("@vectis/shared", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@vectis/shared")>();
+  return {
+    ...actual,
+    getEnv: vi.fn(() => ({
+      ANTHROPIC_API_KEY: "test-key",
+    })),
+    getDb: vi.fn(),
+    createLogger: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  };
+});
 
 vi.mock("../prompts/index.js", () => ({
   NICHE_PROMPTS: {

@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getEnv, getDb, createLogger, type Topic } from "@vectis/shared";
+import { getEnv, getDb, createLogger, MODELS, type Topic } from "@vectis/shared";
 
 const log = createLogger("ideation:topics");
 
@@ -21,7 +21,7 @@ export async function generateTopics(
   log.info({ niche, count }, "Generating topics");
 
   const response = await client.messages.create({
-    model: "claude-opus-4-6",
+    model: MODELS.topicGenerator,
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     messages: [

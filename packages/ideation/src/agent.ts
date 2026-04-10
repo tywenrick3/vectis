@@ -3,6 +3,7 @@ import {
   getEnv,
   getDb,
   createLogger,
+  MODELS,
   type Topic,
   type Script,
   type ResearchBrief,
@@ -135,6 +136,12 @@ const TOOLS: Anthropic.Tool[] = [
                   "Structured visual cue object with a type field (animated_counter, bar_chart, comparison, stat_callout, list_reveal, text_slide). See system prompt for schemas.",
               },
               duration_estimate_ms: { type: "number" },
+              transition: {
+                type: "string",
+                enum: ["fade", "cut", "zoom_in", "slide_left", "smash"],
+                description:
+                  "Transition style for this segment. Vary across segments for energy.",
+              },
             },
             required: ["narration", "visual_cue", "duration_estimate_ms"],
           },
@@ -342,7 +349,7 @@ Analyze this research and create the best possible short-form video content. Use
     log.info({ iteration, niche: brief.niche }, "Agent iteration");
 
     const response = await client.messages.create({
-      model: "claude-opus-4-6",
+      model: MODELS.agent,
       max_tokens: 4096,
       system: systemPrompt,
       tools: TOOLS,
@@ -396,7 +403,8 @@ Analyze this research and create the best possible short-form video content. Use
     throw new Error("Ideation agent failed to submit content within iteration limit");
   }
 
-  // Normalize visual_cue: ensure objects have a valid type field
+  // Normalize visual_cue and transition fields
+  const validTransitions = new Set(["fade", "cut", "zoom_in", "slide_left", "smash"]);
   if (Array.isArray(submitted.body)) {
     for (const segment of submitted.body as Record<string, unknown>[]) {
       if (typeof segment.visual_cue === "object" && segment.visual_cue !== null) {
@@ -404,6 +412,10 @@ Analyze this research and create the best possible short-form video content. Use
         if (!cue.type) {
           segment.visual_cue = { type: "text_slide", text: segment.narration as string };
         }
+      }
+      // Default invalid/missing transitions to "fade"
+      if (!segment.transition || !validTransitions.has(segment.transition as string)) {
+        segment.transition = "fade";
       }
     }
   }

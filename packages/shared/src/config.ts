@@ -45,6 +45,20 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+/**
+ * Centralized model configuration — tune all LLM model choices from here.
+ */
+export const MODELS = {
+  /** Agentic ideation loop — multi-turn reasoning + tool use */
+  agent: "claude-opus-4-6",
+  /** Single-shot script writing */
+  scriptWriter: "claude-opus-4-6",
+  /** Topic brainstorming */
+  topicGenerator: "claude-opus-4-6",
+  /** Hashtag generation — lightweight extraction */
+  hashtagGenerator: "claude-haiku-4-5-20251001",
+} as const;
+
 let _env: Env | null = null;
 
 export function getEnv(): Env {

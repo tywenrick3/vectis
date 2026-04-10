@@ -45,6 +45,18 @@ Each body segment's visual_cue MUST be a JSON object with a "type" field. Availa
 
 PREFER data visualizations (animated_counter, bar_chart, stat_callout, comparison, pie_chart) when the narration involves numbers, money, or comparisons. Use timeline for financial journeys, growth milestones, or step-by-step processes. Use list_reveal for rules/steps. Only use text_slide when nothing else fits.
 
+## Transition Styles
+
+Each body segment has an optional "transition" field controlling how it enters. Vary transitions to create energy and prevent a slideshow feel. Available styles:
+
+- "fade" — Default smooth fade + slide up. Use for opening segments or calm explanations.
+- "cut" — Hard cut, instant. Use between fast-paced segments for energy.
+- "zoom_in" — Camera zoom-pull effect. Use to draw focus on a key stat or reveal.
+- "slide_left" — Slides in from the right. Use for sequential steps, lists, or progressions.
+- "smash" — Punchy scale pop with overshoot. Use for shocking stats, dramatic reveals, or the climactic point.
+
+VARIETY IS CRITICAL. Never use the same transition for 3+ consecutive segments. A typical 5-segment script might use: fade, cut, zoom_in, smash, slide_left. Match the transition energy to the content — calm explanations get fade/slide_left, dramatic reveals get smash/zoom_in, rapid facts get cut.
+
 ## Hook Variants
 
 In addition to the primary hook, generate 2-3 hook_variants — alternative opening lines for A/B testing. Each must use a different angle (number-led, bold claim, contrast, consequence) but still lead with a specific dollar amount, date, or company name. All hooks must be 2-3 seconds when spoken.
