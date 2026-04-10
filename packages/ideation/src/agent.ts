@@ -323,7 +323,7 @@ The primary hook should be your strongest. Variants are for A/B testing.
 IMPORTANT:
 - Avoid angles listed in saturation_signals — those are played out
 - NEVER repeat topics from recently_covered — those have already been published
-- Total script should be 30-60 seconds when read aloud (~150 words/minute)
+- Total script should be 45-65 seconds when read aloud (~170 words/minute)
 - You MUST call submit_content to complete your task`;
 
   const userMessage = `Here is the research brief for the "${brief.niche}" niche:

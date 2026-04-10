@@ -3,7 +3,7 @@ import { getEnv, getDb, createLogger, type Topic } from "@vectis/shared";
 
 const log = createLogger("ideation:topics");
 
-const SYSTEM_PROMPT = `You are a viral short-form content strategist. Generate unique, engaging topic ideas for educational vertical videos (TikTok/Shorts/Reels). Each topic should be specific enough to explain in 30-60 seconds while being broadly appealing. Return JSON only.`;
+const SYSTEM_PROMPT = `You are a viral short-form content strategist. Generate unique, engaging topic ideas for educational vertical videos (TikTok/Shorts/Reels). Each topic should be specific enough to explain in 45-65 seconds while being broadly appealing. Return JSON only.`;
 
 interface TopicSuggestion {
   title: string;

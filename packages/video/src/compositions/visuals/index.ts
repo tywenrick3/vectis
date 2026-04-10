@@ -1,4 +1,5 @@
 export { AnimatedGradient } from "./AnimatedGradient";
+export { BackgroundFX } from "./BackgroundFX";
 export { ProgressBar } from "./ProgressBar";
 export { SegmentTransition } from "./SegmentTransition";
 export { AnimatedCounter } from "./AnimatedCounter";

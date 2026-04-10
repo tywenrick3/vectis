@@ -112,18 +112,18 @@ describe("synthesize", () => {
     );
   });
 
-  it("estimates duration correctly: Math.round((text.length / 15) * 1000)", async () => {
+  it("estimates duration correctly: Math.round((text.length / 17) * 1000)", async () => {
     const script = makeScript({
-      full_text: "A".repeat(150), // 150 chars -> Math.round((150/15)*1000) = 10000
+      full_text: "A".repeat(170), // 170 chars -> Math.round((170/17)*1000) = 10000
     });
-    const expectedDuration = Math.round((150 / 15) * 1000);
+    const expectedDuration = Math.round((170 / 17) * 1000);
 
     const voiceRow = {
       id: "va-1",
       script_id: script.id,
       audio_url: "https://r2.example.com/audio/script-1.mp3",
       duration_ms: expectedDuration,
-      cost: (150 / 1000) * 0.06,
+      cost: (170 / 1000) * 0.06,
       created_at: "2025-01-01T00:00:00Z",
     };
 
@@ -188,10 +188,51 @@ describe("synthesize", () => {
             stability: 0.35,
             similarity_boost: 0.75,
             style: 0.45,
-            speed: 1.1,
+            speed: 1.15,
           },
         }),
       }
+    );
+  });
+
+  it("normalizes digits in the request body so TTS reads numbers as words", async () => {
+    const script = makeScript({
+      full_text: "Apple made $200,000 in 5% of 2024.",
+    });
+
+    const mockDb = createMockDb({
+      voice_assets: { data: { id: "va-1" }, error: null },
+    });
+    vi.mocked(getDb).mockReturnValue(mockDb as any);
+
+    await synthesize(script);
+
+    const fetchMock = vi.mocked(fetch);
+    const body = JSON.parse(fetchMock.mock.calls[0][1]!.body as string);
+    expect(body.text).toBe(
+      "Apple made two hundred thousand dollars in five percent of twenty twenty four."
+    );
+  });
+
+  it("preserves original full_text in DB row (digits, not words)", async () => {
+    const script = makeScript({
+      full_text: "Made $200,000 last year.",
+    });
+
+    const mockDb = createMockDb({
+      voice_assets: { data: { id: "va-1" }, error: null },
+    });
+    vi.mocked(getDb).mockReturnValue(mockDb as any);
+
+    await synthesize(script);
+
+    // Duration/cost are computed from script.full_text, not the spoken form
+    const insertCall = mockDb.from("voice_assets").insert as ReturnType<
+      typeof vi.fn
+    >;
+    const insertArg = insertCall.mock.calls[0][0];
+    expect(insertArg.duration_ms).toBe(
+      Math.round((script.full_text.length / 17) * 1000)
     );
   });
 

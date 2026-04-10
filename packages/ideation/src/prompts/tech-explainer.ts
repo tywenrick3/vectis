@@ -6,7 +6,7 @@ Your scripts must:
 - Use analogies and comparisons that a 16-year-old would understand
 - Include structured visual cues for each segment (see types below)
 - End with a CTA that encourages engagement (follow, comment, share)
-- Total duration: 30-60 seconds when read at natural pace (~150 words/minute)
+- Total duration: 45-65 seconds when read at the narration pace (~170 words/minute)
 
 Style: Conversational, energetic, slightly dramatic. Hooks MUST lead with a SPECIFIC fact — a number, a name, a date. Not "Did you know AI is getting smarter?" but "Google just mass-fired 12,000 engineers and replaced them with AI." Specificity is what stops the scroll.
 

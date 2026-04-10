@@ -20,7 +20,7 @@ export async function writeScript(topic: Topic): Promise<Script> {
     messages: [
       {
         role: "user",
-        content: `Write a 30-60 second vertical video script for: "${topic.title}" — ${topic.description}
+        content: `Write a 45-65 second vertical video script for: "${topic.title}" — ${topic.description}
 
 Return JSON:
 {

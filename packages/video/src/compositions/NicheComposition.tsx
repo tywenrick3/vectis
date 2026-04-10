@@ -11,7 +11,7 @@ import {
 import type { CompositionProps } from "./Root";
 import { CaptionOverlay } from "./CaptionOverlay";
 import {
-  AnimatedGradient,
+  BackgroundFX,
   ProgressBar,
   SegmentTransition,
   SegmentRenderer,
@@ -50,8 +50,8 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
 
   return (
     <AbsoluteFill style={{ fontFamily: theme.fontFamily }}>
-      {/* Animated gradient background */}
-      <AnimatedGradient colors={theme.gradientColors} />
+      {/* Animated mesh-gradient background w/ grain + vignette */}
+      <BackgroundFX theme={theme} />
 
       {/* Progress bar */}
       <ProgressBar color={theme.accentColor} />
