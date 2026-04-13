@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getDb, createLogger, deleteFromR2Batch, r2KeyFromUrl } from "@vectis/shared";
 import { buildResearchBrief } from "@vectis/research";
-import { runIdeationAgent } from "@vectis/ideation";
+import { runIdeationAgent, classifyHookFormat } from "@vectis/ideation";
 import { synthesize } from "@vectis/voice";
 import { renderVideo } from "@vectis/video";
 import { assemble } from "@vectis/assembly";
@@ -234,6 +234,22 @@ pipelineRoute.post("/record-run", async (c) => {
   const db = getDb();
 
   try {
+    // Look up script hook for attribution. Non-fatal — missing script just
+    // means no hook attribution, not a failed run.
+    let hookText: string | null = null;
+    let hookFormat: string | null = null;
+    if (body.script_id) {
+      const { data: script } = await db
+        .from("scripts")
+        .select("hook")
+        .eq("id", body.script_id)
+        .single();
+      if (script?.hook) {
+        hookText = script.hook;
+        hookFormat = classifyHookFormat(script.hook);
+      }
+    }
+
     const { data, error } = await db
       .from("pipeline_runs")
       .insert({
@@ -245,6 +261,9 @@ pipelineRoute.post("/record-run", async (c) => {
         youtube_publish_id: body.youtube_publish_id ?? null,
         tiktok_publish_id: body.tiktok_publish_id ?? null,
         research_brief_id: body.research_brief_id ?? null,
+        hook_variant_index: 0,
+        hook_text: hookText,
+        hook_format: hookFormat,
         status: body.status ?? "completed",
         completed_at: new Date().toISOString(),
       })

@@ -12,7 +12,9 @@
     "test": "turbo test",
     "e2e": "node --env-file=.env --import=tsx scripts/e2e-pipeline.ts",
     "e2e:dry": "node --env-file=.env --import=tsx scripts/e2e-pipeline.ts --dry-run",
-    "purge-r2": "node --env-file=.env --import=tsx scripts/purge-r2.ts"
+    "purge-r2": "node --env-file=.env --import=tsx scripts/purge-r2.ts",
+    "backfill-hooks": "node --env-file=.env --import=tsx scripts/backfill-hook-formats.ts",
+    "backfill-features": "node --env-file=.env --import=tsx scripts/backfill-script-features.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

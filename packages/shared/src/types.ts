@@ -174,11 +174,15 @@ export interface TopicPerformance {
 export interface AnalyticsSnapshot {
   id: string;
   pipeline_run_id: string;
+  platform: "tiktok" | "youtube" | null;
   views: number;
   likes: number;
   comments: number;
   shares: number;
   avg_watch_time_ms: number;
+  script_duration_ms: number | null;
+  completion_rate: number | null;
+  avg_view_percentage: number | null;
   fetched_at: string;
 }
 

@@ -104,6 +104,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.39.0
         version: 0.39.0
+      '@vectis/analytics':
+        specifier: workspace:*
+        version: link:../analytics
       '@vectis/research':
         specifier: workspace:*
         version: link:../research

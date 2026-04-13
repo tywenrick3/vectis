@@ -9,6 +9,8 @@ import {
   type ResearchBrief,
 } from "@vectis/shared";
 import { NICHE_PROMPTS } from "./prompts/index.js";
+import { extractScriptFeatures } from "./features.js";
+import { getCraftPatterns } from "@vectis/analytics";
 
 const log = createLogger("ideation:agent");
 
@@ -75,6 +77,21 @@ const TOOLS: Anthropic.Tool[] = [
         limit: {
           type: "number",
           description: "Number of top topics to return (default 10)",
+        },
+      },
+      required: ["niche"],
+    },
+  },
+  {
+    name: "craft_lookup",
+    description:
+      "Look up winning and losing SCRIPT-CRAFT patterns for this niche: which hook formats, segment counts, visual cue types, and specificity levels drive retention. Use this to structure your script, not just pick a topic.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        niche: {
+          type: "string",
+          description: "The niche to look up craft patterns for",
         },
       },
       required: ["niche"],
@@ -209,6 +226,10 @@ async function handleToolCall(
         .limit(limit);
       return JSON.stringify(data ?? []);
     }
+    case "craft_lookup": {
+      const patterns = await getCraftPatterns(input.niche as string);
+      return JSON.stringify(patterns);
+    }
     case "check_uniqueness": {
       const db = getDb();
       const { data: recent } = await db
@@ -272,14 +293,15 @@ You are an ideation agent for a short-form video content pipeline. You have been
 
 Your job:
 1. FIRST: Call score_lookup to review past topic performance — this is MANDATORY before choosing any angle
-2. Review the research brief carefully — study top_performers (winning patterns), low_performers (avoid these), recently_covered (already published), and saturation_signals (played out)
-3. Identify the best angle — find a gap or fresh take that ALIGNS with patterns from top-performing topics
-4. If needed, search deeper on your chosen angle using tavily_search to find URLs, then firecrawl_scrape to deeply read promising pages (prefer firecrawl_scrape over tavily_extract for richer content)
-5. Write a compelling topic + script (hook → body → CTA)
-6. Use check_uniqueness to verify your topic hasn't been covered before
-7. Self-critique: Is the hook strong enough? Does it contain a concrete fact? Does it align with what performed well? If not, revise.
-8. Generate hashtags and a caption
-9. Submit the final content using the submit_content tool
+2. SECOND: Call craft_lookup to see which script structures (hook formats, segment counts, visual cue types) are driving retention in this niche
+3. Review the research brief carefully — study top_performers (winning patterns), low_performers (avoid these), recently_covered (already published), and saturation_signals (played out)
+4. Identify the best angle — find a gap or fresh take that ALIGNS with patterns from top-performing topics
+5. If needed, search deeper on your chosen angle using tavily_search to find URLs, then firecrawl_scrape to deeply read promising pages (prefer firecrawl_scrape over tavily_extract for richer content)
+6. Write a compelling topic + script (hook → body → CTA) — match the winning craft patterns from craft_lookup
+7. Use check_uniqueness to verify your topic hasn't been covered before
+8. Self-critique: Is the hook strong enough? Does it contain a concrete fact? Does it align with what performed well? If not, revise.
+9. Generate hashtags and a caption
+10. Submit the final content using the submit_content tool
 
 ## PERFORMANCE-INFORMED DECISIONS (MANDATORY)
 
@@ -292,6 +314,21 @@ The research brief includes top_performers and low_performers with actual metric
 - High comments relative to views = the topic sparked discussion. Lean into controversial/surprising angles.
 
 If score_lookup returns no data or performance arrays are empty, this niche has no history yet — rely on research data and interestingness criteria.
+
+## CRAFT PATTERNS (call craft_lookup after score_lookup)
+
+craft_lookup returns script-structure patterns based on retention (completion_rate) from past scripts in this niche. It splits past scripts into winning and losing buckets and shows you what the winners have in common.
+
+Use it to shape your SCRIPT, not your topic. Specifically:
+
+- winning.hook_formats — the hook format (number_led, question, contrast, claim, stat_callout) that drove the highest completion. Use one of these for your primary hook and hook_variants.
+- winning.segment_count_median — how many body segments winners use. Target this number (±1).
+- winning.word_count_median — target word count for the full script. Hitting this matters for pacing.
+- winning.visual_cue_types — cue types that appear in at least half of winning scripts. Bias your visual_cue choices toward these.
+- winning.specificity_density_median — numbers-per-100-words in winners. Winners in most niches have >4 per 100 words. Pack your script with concrete figures.
+- losing.* — use as an anti-pattern list. If losers average 2 visual cue types and winners average 4, you need variety.
+
+If craft_lookup returns sample_count < 4 or winning is null, this niche doesn't have enough retention data yet — skip craft patterns and rely on the interestingness criteria below.
 
 ## INTERESTINGNESS CRITERIA — Apply these to every topic idea
 
@@ -465,6 +502,30 @@ Analyze this research and create the best possible short-form video content. Use
     .single();
 
   if (scriptError) throw new Error(`Failed to insert script: ${scriptError.message}`);
+
+  // Extract + persist craft features. Non-fatal — a failure here shouldn't
+  // tank the whole ideation run.
+  try {
+    const features = extractScriptFeatures(script as Script);
+    const { error: featuresError } = await db.from("script_features").insert({
+      script_id: script.id,
+      hook_format: features.hook_format,
+      segment_count: features.segment_count,
+      word_count: features.word_count,
+      avg_segment_words: features.avg_segment_words,
+      visual_cue_types: features.visual_cue_types,
+      visual_cue_variety: features.visual_cue_variety,
+      transition_variety: features.transition_variety,
+      specificity_density: features.specificity_density,
+      has_number_in_hook: features.has_number_in_hook,
+      estimated_duration_ms: features.estimated_duration_ms,
+    });
+    if (featuresError) {
+      log.warn({ error: featuresError.message, scriptId: script.id }, "Failed to persist script features");
+    }
+  } catch (err) {
+    log.warn({ error: err, scriptId: script.id }, "Feature extraction failed");
+  }
 
   log.info(
     { topicId: topic.id, scriptId: script.id, title: topic.title },

@@ -8,7 +8,7 @@ export async function ingestMetrics(): Promise<AnalyticsSnapshot[]> {
   // Get recent pipeline runs that have a TikTok publish ID
   const { data: runs, error: runsError } = await db
     .from("pipeline_runs")
-    .select("id, tiktok_publish_id")
+    .select("id, tiktok_publish_id, voice_asset_id")
     .not("tiktok_publish_id", "is", null)
     .eq("status", "completed")
     .order("completed_at", { ascending: false })
@@ -18,6 +18,29 @@ export async function ingestMetrics(): Promise<AnalyticsSnapshot[]> {
   if (!runs?.length) {
     log.info("No published runs to ingest");
     return [];
+  }
+
+  // Batch-fetch voice durations (source of truth for "what 100% watched means")
+  const voiceAssetIds = runs
+    .map((r) => r.voice_asset_id)
+    .filter((id): id is string => !!id);
+
+  const durationByRun = new Map<string, number>();
+  if (voiceAssetIds.length > 0) {
+    const { data: voiceAssets } = await db
+      .from("voice_assets")
+      .select("id, duration_ms")
+      .in("id", voiceAssetIds);
+
+    const durationByVoice = new Map(
+      (voiceAssets ?? []).map((v) => [v.id, v.duration_ms as number])
+    );
+    for (const run of runs) {
+      if (run.voice_asset_id) {
+        const d = durationByVoice.get(run.voice_asset_id);
+        if (d) durationByRun.set(run.id, d);
+      }
+    }
   }
 
   // Get TikTok credentials
@@ -61,15 +84,26 @@ export async function ingestMetrics(): Promise<AnalyticsSnapshot[]> {
       const video = data.data?.videos?.[0];
       if (!video) continue;
 
+      const avgWatchMs = Math.round((video.avg_watch_time ?? 0) * 1000);
+      const scriptDurationMs = durationByRun.get(run.id) ?? null;
+      const completionRate =
+        scriptDurationMs && scriptDurationMs > 0
+          ? Math.min(1, avgWatchMs / scriptDurationMs)
+          : null;
+
       const { data: snapshot, error } = await db
         .from("analytics_snapshots")
         .insert({
           pipeline_run_id: run.id,
+          platform: "tiktok",
           views: video.view_count ?? 0,
           likes: video.like_count ?? 0,
           comments: video.comment_count ?? 0,
           shares: video.share_count ?? 0,
-          avg_watch_time_ms: (video.avg_watch_time ?? 0) * 1000,
+          avg_watch_time_ms: avgWatchMs,
+          script_duration_ms: scriptDurationMs,
+          completion_rate: completionRate,
+          avg_view_percentage: null,
         })
         .select()
         .single();
