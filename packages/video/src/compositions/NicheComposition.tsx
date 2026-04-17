@@ -3,6 +3,7 @@ import {
   AbsoluteFill,
   Audio,
   Sequence,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
   interpolate,
@@ -23,16 +24,33 @@ interface NicheCompositionProps extends CompositionProps {
   disclaimer?: string;
 }
 
+// Music bed fades in over 0.5s and out over 1s, holds at 15% between.
+const MUSIC_BASE_VOLUME = 0.15;
+const MUSIC_FADE_IN_FRAMES = 15;
+const MUSIC_FADE_OUT_FRAMES = 30;
+
 export const NicheComposition: React.FC<NicheCompositionProps> = ({
   script,
   voiceAsset,
   captionWords,
   hookOverride,
+  musicTrack,
   theme,
   disclaimer,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  const musicVolume = (f: number): number => {
+    if (f < MUSIC_FADE_IN_FRAMES) {
+      return (f / MUSIC_FADE_IN_FRAMES) * MUSIC_BASE_VOLUME;
+    }
+    const fadeOutStart = durationInFrames - MUSIC_FADE_OUT_FRAMES;
+    if (f > fadeOutStart) {
+      return Math.max(0, (durationInFrames - f) / MUSIC_FADE_OUT_FRAMES) * MUSIC_BASE_VOLUME;
+    }
+    return MUSIC_BASE_VOLUME;
+  };
 
   const hookDurationFrames = 3 * fps;
   let currentFrame = hookDurationFrames;
@@ -58,6 +76,9 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
 
       {/* Audio track */}
       {voiceAsset.audio_url && <Audio src={voiceAsset.audio_url} />}
+
+      {/* Background music bed */}
+      {musicTrack && <Audio src={staticFile(musicTrack)} volume={musicVolume} />}
 
       {/* Hook */}
       <Sequence durationInFrames={hookDurationFrames}>

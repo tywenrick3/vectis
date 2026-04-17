@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import fs from "node:fs";
 import path from "node:path";
 import { createLogger, getDb, getEnv, type Script, type VoiceAsset, type VideoAsset, type TranscriptionWord } from "@vectis/shared";
+import { selectMusicTrack } from "./music-selector";
 
 const log = createLogger("video:render");
 
@@ -16,6 +17,8 @@ export interface RenderToFileOptions {
   captionWords?: TranscriptionWord[];
   hookOverride?: string;
   outputPath?: string;
+  // Pass `null` to explicitly disable music. Omit to auto-select by niche.
+  musicTrack?: string | null;
 }
 
 export async function renderToFile(
@@ -23,16 +26,23 @@ export async function renderToFile(
   voiceAsset: VoiceAsset,
   niche: string,
   opts?: RenderToFileOptions
-): Promise<{ outputPath: string; compositionId: string }> {
+): Promise<{ outputPath: string; compositionId: string; musicTrack: string | null }> {
   const compositionId = COMPOSITIONS[niche] ?? "TechExplainer";
   const outputPath = opts?.outputPath ?? `/tmp/vectis-${script.id}.mp4`;
 
-  log.info({ scriptId: script.id, compositionId }, "Starting render");
+  const musicTrack =
+    opts?.musicTrack === undefined
+      ? selectMusicTrack(script.id, niche)
+      : opts.musicTrack;
+
+  log.info({ scriptId: script.id, compositionId, musicTrack }, "Starting render");
 
   const entryPoint = path.resolve(import.meta.dirname, "compositions/index.ts");
+  const publicDir = path.resolve(import.meta.dirname, "..", "public");
 
   const bundleLocation = await bundle({
     entryPoint,
+    publicDir,
   });
 
   const inputProps = {
@@ -40,6 +50,7 @@ export async function renderToFile(
     voiceAsset,
     captionWords: opts?.captionWords,
     hookOverride: opts?.hookOverride,
+    musicTrack,
   };
 
   const composition = await selectComposition({
@@ -57,7 +68,7 @@ export async function renderToFile(
   });
 
   log.info({ outputPath, compositionId }, "Render to file complete");
-  return { outputPath, compositionId };
+  return { outputPath, compositionId, musicTrack };
 }
 
 export async function renderVideo(

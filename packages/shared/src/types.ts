@@ -169,6 +169,16 @@ export interface TopicPerformance {
   views: number;
   likes: number;
   comments: number;
+  /** Per-platform score breakdown — only set when reading from topic_platform_scores. */
+  platform_scores?: Record<string, number>;
+}
+
+export interface TopicPlatformScore {
+  topic_id: string;
+  platform: string;
+  score: number;
+  sample_count: number;
+  updated_at: string;
 }
 
 export interface AnalyticsSnapshot {

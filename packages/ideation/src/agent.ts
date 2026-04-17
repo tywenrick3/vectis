@@ -66,7 +66,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "score_lookup",
     description:
-      "Look up past topic performance scores for a given niche. Returns top-performing topics and their scores to help you pick winning angles.",
+      "Look up past topic performance scores for a given niche. Returns top-performing topics with per-platform breakdown (youtube, tiktok). The cross-platform `score` is the max across platforms; `platform_scores` shows where each topic actually won.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -77,6 +77,12 @@ const TOOLS: Anthropic.Tool[] = [
         limit: {
           type: "number",
           description: "Number of top topics to return (default 10)",
+        },
+        platform: {
+          type: "string",
+          enum: ["youtube", "tiktok"],
+          description:
+            "Optional: rank by per-platform score instead of the cross-platform rollup. Use this when you're targeting one platform.",
         },
       },
       required: ["niche"],
@@ -217,14 +223,82 @@ async function handleToolCall(
     case "score_lookup": {
       const db = getDb();
       const limit = (input.limit as number) ?? 10;
-      const { data } = await db
+      const platform = input.platform as string | undefined;
+
+      if (platform) {
+        // Per-platform ranking: join topics with topic_platform_scores filtered
+        // by platform, sort by per-platform score.
+        const { data: rows } = await db
+          .from("topic_platform_scores")
+          .select("score, sample_count, topics!inner(id, title, description, niche, used)")
+          .eq("platform", platform)
+          .eq("topics.niche", input.niche as string)
+          .eq("topics.used", true)
+          .order("score", { ascending: false })
+          .limit(limit);
+
+        // Supabase treats !inner joins as arrays in its inferred type even
+        // though the query yields a single related row. Normalize to a single
+        // topic object.
+        type JoinedRow = {
+          score: number;
+          sample_count: number;
+          topics:
+            | { title: string; description: string; niche: string }
+            | { title: string; description: string; niche: string }[];
+        };
+        const flattened = ((rows ?? []) as JoinedRow[])
+          .map((r) => {
+            const t = Array.isArray(r.topics) ? r.topics[0] : r.topics;
+            if (!t) return null;
+            return {
+              title: t.title,
+              description: t.description,
+              niche: t.niche,
+              score: r.score,
+              sample_count: r.sample_count,
+              platform,
+            };
+          })
+          .filter((x) => x !== null);
+        return JSON.stringify(flattened);
+      }
+
+      // Cross-platform rollup with per-platform breakdown attached.
+      const { data: topics } = await db
         .from("topics")
-        .select("title, description, score, niche")
+        .select("id, title, description, score, niche")
         .eq("niche", input.niche as string)
         .eq("used", true)
         .order("score", { ascending: false })
         .limit(limit);
-      return JSON.stringify(data ?? []);
+
+      const topicList = topics ?? [];
+      if (topicList.length === 0) return JSON.stringify([]);
+
+      const ids = topicList.map((t: { id: string }) => t.id);
+      const { data: pscores } = await db
+        .from("topic_platform_scores")
+        .select("topic_id, platform, score")
+        .in("topic_id", ids);
+
+      const platformMap = new Map<string, Record<string, number>>();
+      for (const row of pscores ?? []) {
+        const existing = platformMap.get(row.topic_id) ?? {};
+        existing[row.platform] = row.score;
+        platformMap.set(row.topic_id, existing);
+      }
+
+      const enriched = topicList.map(
+        (t: { id: string; title: string; description: string; score: number; niche: string }) => ({
+          title: t.title,
+          description: t.description,
+          niche: t.niche,
+          score: t.score,
+          platform_scores: platformMap.get(t.id) ?? {},
+        })
+      );
+      return JSON.stringify(enriched);
     }
     case "craft_lookup": {
       const patterns = await getCraftPatterns(input.niche as string);
@@ -308,7 +382,8 @@ Your job:
 You MUST call score_lookup before choosing your angle. This is not optional.
 
 The research brief includes top_performers and low_performers with actual metrics:
-- score: 0-100 composite engagement score. Higher = better.
+- score: 0-100 composite of retention (50%), engagement intent (30%), and reach (20%), ranked by percentile within the platform cohort and decayed over a 14-day half-life. A high score means recent + completion-rate winner, NOT just lots of views.
+- platform_scores: per-platform breakdown ({youtube: 80, tiktok: 30}). A topic that wins on YT may flop on TT. Use the breakdown to pick the right angle for the platform you're targeting.
 - Topics 70+ = WINNING patterns. Create content in a similar vein (same format, similar specificity, related themes).
 - Topics below 30 = UNDERPERFORMERS. Avoid similar angles.
 - High comments relative to views = the topic sparked discussion. Lean into controversial/surprising angles.

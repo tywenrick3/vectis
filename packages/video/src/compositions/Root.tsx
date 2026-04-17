@@ -9,6 +9,7 @@ export interface CompositionProps {
   voiceAsset: VoiceAsset;
   captionWords?: TranscriptionWord[];
   hookOverride?: string;
+  musicTrack?: string | null;
 }
 
 export const RemotionRoot: React.FC = () => {

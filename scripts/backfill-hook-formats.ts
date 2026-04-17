@@ -1,8 +1,9 @@
 #!/usr/bin/env tsx
 
 // Vectis: Backfill hook_format / hook_text on existing pipeline_runs.
-// Idempotent — only touches rows where hook_format is null.
-// Usage: tsx scripts/backfill-hook-formats.ts [--dry-run]
+// Idempotent — by default only touches rows where hook_format is null.
+// Pass --force to re-classify every row (use after classifier rule changes).
+// Usage: pnpm backfill-hooks [-- --dry-run] [-- --force]
 
 import { getDb } from "../packages/shared/src/index.js";
 import { classifyHookFormat } from "../packages/ideation/src/hook-format.js";
@@ -14,18 +15,19 @@ const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 
 const dryRun = process.argv.includes("--dry-run");
+const force = process.argv.includes("--force");
 
 async function main(): Promise<void> {
   const db = getDb();
 
   console.log(bold("Backfilling hook_format / hook_text on pipeline_runs"));
-  if (dryRun) console.log(yellow("DRY RUN — no writes will be made\n"));
+  if (dryRun) console.log(yellow("DRY RUN — no writes will be made"));
+  if (force) console.log(yellow("FORCE — re-classifying every run, including ones already set"));
+  console.log();
 
-  // Fetch all runs missing hook_format
-  const { data: runs, error } = await db
-    .from("pipeline_runs")
-    .select("id, script_id, hook_format")
-    .is("hook_format", null);
+  // Fetch runs. With --force, take everything; otherwise only un-classified rows.
+  const query = db.from("pipeline_runs").select("id, script_id, hook_format");
+  const { data: runs, error } = await (force ? query : query.is("hook_format", null));
 
   if (error) {
     console.error(red(`Failed to fetch runs: ${error.message}`));
@@ -40,7 +42,8 @@ async function main(): Promise<void> {
   console.log(`Found ${bold(String(runs.length))} runs to backfill.\n`);
 
   const runsWithScripts = runs.filter(
-    (r): r is { id: string; script_id: string; hook_format: null } => !!r.script_id
+    (r): r is { id: string; script_id: string; hook_format: string | null } =>
+      !!r.script_id
   );
   const scriptIds = runsWithScripts.map((r) => r.script_id);
 

@@ -30,9 +30,20 @@ describe("classifyHookFormat", () => {
     { hook: "The truth about AI coding assistants", expected: "claim" },
     { hook: "I built a startup in 24 hours", expected: "claim" },
 
+    // named_entity — brand/org/product hooks (the dominant tech-news pattern)
+    { hook: "Vim just shipped native LSP support", expected: "named_entity" },
+    { hook: "Rust 1.80 dropped today", expected: "named_entity" },
+    { hook: "NASA just mass-deleted their entire moon base blueprint", expected: "named_entity" },
+    { hook: "OpenAI released a new model", expected: "named_entity" },
+    { hook: "GitHub broke git push for half the internet", expected: "named_entity" },
+    { hook: "TikTok unveiled a new algorithm", expected: "named_entity" },
+    { hook: "Google's new Gemini model just leaked", expected: "named_entity" },
+    { hook: "iPhone 17 launched with a wild new camera", expected: "named_entity" },
+    { hook: "AWS hit a global outage", expected: "named_entity" },
+
     // other — fallback for unclassified openers
-    { hook: "Vim just shipped native LSP support", expected: "other" },
-    { hook: "Rust 1.80 dropped today", expected: "other" },
+    { hook: "Programming is hard for most people to learn", expected: "other" },
+    { hook: "Sometimes the simplest fix wins", expected: "other" },
 
     // edge cases
     { hook: "", expected: "other" },

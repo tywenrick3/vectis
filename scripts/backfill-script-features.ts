@@ -1,8 +1,9 @@
 #!/usr/bin/env tsx
 
 // Vectis: Backfill script_features for existing scripts.
-// Idempotent — skips scripts that already have a features row.
-// Usage: pnpm backfill-features [-- --dry-run]
+// Idempotent — by default skips scripts that already have a features row.
+// Pass --force to recompute and upsert every script (use after rule changes).
+// Usage: pnpm backfill-features [-- --dry-run] [-- --force]
 
 import { getDb, type Script } from "../packages/shared/src/index.js";
 import { extractScriptFeatures } from "../packages/ideation/src/features.js";
@@ -14,12 +15,15 @@ const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 
 const dryRun = process.argv.includes("--dry-run");
+const force = process.argv.includes("--force");
 
 async function main(): Promise<void> {
   const db = getDb();
 
   console.log(bold("Backfilling script_features"));
-  if (dryRun) console.log(yellow("DRY RUN — no writes\n"));
+  if (dryRun) console.log(yellow("DRY RUN — no writes"));
+  if (force) console.log(yellow("FORCE — re-extracting every script, upserting on conflict"));
+  console.log();
 
   const { data: existing, error: existingError } = await db
     .from("script_features")
@@ -41,7 +45,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const todo = scripts.filter((s) => !already.has(s.id));
+  const todo = force ? scripts : scripts.filter((s) => !already.has(s.id));
   console.log(
     `Scripts: ${scripts.length}, already-featured: ${already.size}, to-backfill: ${bold(String(todo.length))}\n`
   );
@@ -75,21 +79,26 @@ async function main(): Promise<void> {
       );
 
       if (!dryRun) {
-        const { error: insertError } = await db.from("script_features").insert({
-          script_id: script.id,
-          hook_format: features.hook_format,
-          segment_count: features.segment_count,
-          word_count: features.word_count,
-          avg_segment_words: features.avg_segment_words,
-          visual_cue_types: features.visual_cue_types,
-          visual_cue_variety: features.visual_cue_variety,
-          transition_variety: features.transition_variety,
-          specificity_density: features.specificity_density,
-          has_number_in_hook: features.has_number_in_hook,
-          estimated_duration_ms: features.estimated_duration_ms,
-        });
+        const { error: insertError } = await db
+          .from("script_features")
+          .upsert(
+            {
+              script_id: script.id,
+              hook_format: features.hook_format,
+              segment_count: features.segment_count,
+              word_count: features.word_count,
+              avg_segment_words: features.avg_segment_words,
+              visual_cue_types: features.visual_cue_types,
+              visual_cue_variety: features.visual_cue_variety,
+              transition_variety: features.transition_variety,
+              specificity_density: features.specificity_density,
+              has_number_in_hook: features.has_number_in_hook,
+              estimated_duration_ms: features.estimated_duration_ms,
+            },
+            { onConflict: "script_id" }
+          );
         if (insertError) {
-          console.error(red(`    insert failed: ${insertError.message}`));
+          console.error(red(`    upsert failed: ${insertError.message}`));
           failed++;
           continue;
         }
