@@ -4,12 +4,18 @@ import { TechExplainer } from "./TechExplainer";
 import { FinanceEducation } from "./FinanceEducation";
 import type { Script, VoiceAsset, TranscriptionWord } from "@vectis/shared";
 
+export interface BackgroundClip {
+  url: string;
+  startSec: number;
+  durationSec: number;
+}
+
 export interface CompositionProps {
   script: Script;
   voiceAsset: VoiceAsset;
   captionWords?: TranscriptionWord[];
   hookOverride?: string;
-  musicTrack?: string | null;
+  backgroundClip?: BackgroundClip | null;
 }
 
 export const RemotionRoot: React.FC = () => {

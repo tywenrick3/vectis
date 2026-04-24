@@ -1,5 +1,6 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
+import { TEXT_SHADOW_HERO } from "./themes";
 
 interface TextSlideProps {
   text: string;
@@ -9,8 +10,8 @@ interface TextSlideProps {
 
 export const TextSlide: React.FC<TextSlideProps> = ({
   text,
-  accentColor,
-  durationInFrames,
+  accentColor: _accentColor,
+  durationInFrames: _durationInFrames,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -25,31 +26,25 @@ export const TextSlide: React.FC<TextSlideProps> = ({
     config: { damping: 14, stiffness: 100, mass: 0.7 },
   });
 
-  const scale = interpolate(scaleSpring, [0, 1], [0.92, 1]);
+  const scale = interpolate(scaleSpring, [0, 1], [0.94, 1]);
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "60px 50px",
+        color: "#ffffff",
+        fontSize: 46,
+        fontWeight: 800,
+        fontFamily: "Inter, sans-serif",
+        textAlign: "center",
+        lineHeight: 1.35,
+        maxWidth: 880,
+        opacity: fadeIn,
+        transform: `scale(${scale})`,
+        letterSpacing: -0.5,
+        textShadow: TEXT_SHADOW_HERO,
       }}
     >
-      <div
-        style={{
-          color: "#ffffffee",
-          fontSize: 38,
-          fontWeight: 600,
-          fontFamily: "Inter, sans-serif",
-          textAlign: "center",
-          lineHeight: 1.5,
-          maxWidth: 800,
-          opacity: fadeIn,
-          transform: `scale(${scale})`,
-        }}
-      >
-        {text}
-      </div>
-    </AbsoluteFill>
+      {text}
+    </div>
   );
 };

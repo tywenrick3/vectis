@@ -14,7 +14,11 @@
     "e2e:dry": "node --env-file=.env --import=tsx scripts/e2e-pipeline.ts --dry-run",
     "purge-r2": "node --env-file=.env --import=tsx scripts/purge-r2.ts",
     "backfill-hooks": "node --env-file=.env --import=tsx scripts/backfill-hook-formats.ts",
-    "backfill-features": "node --env-file=.env --import=tsx scripts/backfill-script-features.ts"
+    "backfill-features": "node --env-file=.env --import=tsx scripts/backfill-script-features.ts",
+    "gameplay:discover": "node --env-file=.env --import=tsx scripts/gameplay-discover.ts",
+    "gameplay:find-channels": "node --env-file=.env --import=tsx scripts/gameplay-find-channels.ts",
+    "gameplay:refresh": "node --env-file=.env --import=tsx scripts/gameplay-refresh.ts",
+    "gameplay:stats": "node --env-file=.env --import=tsx scripts/gameplay-stats.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

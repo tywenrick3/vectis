@@ -1,5 +1,6 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { TEXT_SHADOW_HERO, TEXT_SHADOW_BODY } from "./themes";
 
 interface AnimatedCounterProps {
   value: number;
@@ -49,33 +50,39 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   const glowOpacity = interpolate(
     frame,
     [countEnd, countEnd + 10, durationInFrames],
-    [0, 0.4, 0.2],
+    [0, 0.55, 0.3],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        justifyContent: "center",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        padding: 60,
       }}
     >
-      {/* Glow behind number */}
+      {/* Ambient glow */}
       <div
         style={{
           position: "absolute",
-          width: 400,
-          height: 400,
+          width: 380,
+          height: 380,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${accentColor}40 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${accentColor}45 0%, transparent 68%)`,
           opacity: glowOpacity,
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
         }}
       />
 
       {/* Counter value */}
       <div
         style={{
+          position: "relative",
           color: accentColor,
           fontSize: 96,
           fontWeight: 900,
@@ -83,6 +90,7 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
           transform: `scale(${scale})`,
           textAlign: "center",
           letterSpacing: -2,
+          textShadow: TEXT_SHADOW_HERO,
         }}
       >
         {prefix}{formatNumber(currentValue)}{suffix}
@@ -91,18 +99,21 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
       {/* Label */}
       <div
         style={{
-          color: "#ffffffcc",
-          fontSize: 32,
-          fontWeight: 500,
+          position: "relative",
+          color: "#ffffff",
+          fontSize: 30,
+          fontWeight: 600,
           fontFamily: "Inter, sans-serif",
-          marginTop: 20,
+          marginTop: 16,
           opacity: labelOpacity,
           textAlign: "center",
-          maxWidth: 700,
+          maxWidth: 780,
+          lineHeight: 1.35,
+          textShadow: TEXT_SHADOW_BODY,
         }}
       >
         {label}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };

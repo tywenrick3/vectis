@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, spring, useVideoConfig, interpolate } from "remotion";
+import { useCurrentFrame, spring, useVideoConfig, interpolate } from "remotion";
 
 interface ComparisonSide {
   name: string;
@@ -20,35 +20,36 @@ const Card: React.FC<{
   direction: "left" | "right";
   frame: number;
 }> = ({ side, accentColor, slideProgress, direction, frame }) => {
-  const translateX = direction === "left"
-    ? interpolate(slideProgress, [0, 1], [-400, 0])
-    : interpolate(slideProgress, [0, 1], [400, 0]);
+  const translateX =
+    direction === "left"
+      ? interpolate(slideProgress, [0, 1], [-220, 0])
+      : interpolate(slideProgress, [0, 1], [220, 0]);
 
   return (
     <div
       style={{
         flex: 1,
-        backgroundColor: "#ffffff08",
-        borderRadius: 20,
-        padding: "32px 28px",
-        border: `1px solid ${accentColor}30`,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderRadius: 14,
+        padding: "18px 18px",
+        border: `1px solid ${accentColor}33`,
         transform: `translateX(${translateX}px)`,
         opacity: slideProgress,
         display: "flex",
         flexDirection: "column",
-        gap: 20,
+        gap: 12,
       }}
     >
       {/* Name */}
       <div
         style={{
           color: accentColor,
-          fontSize: 32,
+          fontSize: 26,
           fontWeight: 800,
           fontFamily: "Inter, sans-serif",
           textAlign: "center",
-          paddingBottom: 16,
-          borderBottom: `2px solid ${accentColor}30`,
+          paddingBottom: 10,
+          borderBottom: `2px solid ${accentColor}44`,
         }}
       >
         {side.name}
@@ -71,12 +72,13 @@ const Card: React.FC<{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              gap: 8,
             }}
           >
             <span
               style={{
-                color: "#ffffff80",
-                fontSize: 24,
+                color: "#ffffffaa",
+                fontSize: 20,
                 fontFamily: "Inter, sans-serif",
               }}
             >
@@ -84,8 +86,8 @@ const Card: React.FC<{
             </span>
             <span
               style={{
-                color: "#ffffffee",
-                fontSize: 26,
+                color: "#ffffff",
+                fontSize: 22,
                 fontWeight: 700,
                 fontFamily: "Inter, sans-serif",
               }}
@@ -103,7 +105,7 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
   left,
   right,
   accentColor,
-  durationInFrames,
+  durationInFrames: _durationInFrames,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -120,36 +122,39 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
   });
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "60px 40px",
+        display: "flex",
+        gap: 16,
+        width: "100%",
+        alignItems: "stretch",
       }}
     >
+      <Card
+        side={left}
+        accentColor={accentColor}
+        slideProgress={slideProgress}
+        direction="left"
+        frame={frame}
+      />
+
+      {/* Divider */}
       <div
         style={{
-          display: "flex",
-          gap: 24,
-          width: "100%",
-          maxWidth: 960,
-          alignItems: "stretch",
+          width: 2,
+          backgroundColor: `${accentColor}66`,
+          transform: `scaleY(${dividerScale})`,
+          alignSelf: "stretch",
         }}
-      >
-        <Card side={left} accentColor={accentColor} slideProgress={slideProgress} direction="left" frame={frame} />
+      />
 
-        {/* Divider */}
-        <div
-          style={{
-            width: 2,
-            backgroundColor: `${accentColor}50`,
-            transform: `scaleY(${dividerScale})`,
-            alignSelf: "stretch",
-          }}
-        />
-
-        <Card side={right} accentColor={accentColor} slideProgress={slideProgress} direction="right" frame={frame} />
-      </div>
-    </AbsoluteFill>
+      <Card
+        side={right}
+        accentColor={accentColor}
+        slideProgress={slideProgress}
+        direction="right"
+        frame={frame}
+      />
+    </div>
   );
 };

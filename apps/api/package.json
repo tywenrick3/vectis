@@ -12,17 +12,18 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "hono": "^4.7.0",
     "@hono/node-server": "^1.13.0",
-    "dotenv": "^16.4.0",
-    "@vectis/shared": "workspace:*",
-    "@vectis/ideation": "workspace:*",
-    "@vectis/voice": "workspace:*",
-    "@vectis/video": "workspace:*",
-    "@vectis/publisher": "workspace:*",
     "@vectis/analytics": "workspace:*",
+    "@vectis/assembly": "workspace:*",
+    "@vectis/gameplay": "workspace:*",
+    "@vectis/ideation": "workspace:*",
+    "@vectis/publisher": "workspace:*",
     "@vectis/research": "workspace:*",
-    "@vectis/assembly": "workspace:*"
+    "@vectis/shared": "workspace:*",
+    "@vectis/video": "workspace:*",
+    "@vectis/voice": "workspace:*",
+    "dotenv": "^16.4.0",
+    "hono": "^4.7.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

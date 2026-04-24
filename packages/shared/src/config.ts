@@ -41,6 +41,9 @@ const envSchema = z.object({
 
   // OpenAI (Whisper transcription)
   OPENAI_API_KEY: z.string().min(1),
+
+  // YouTube Data API (gameplay background discovery)
+  YOUTUBE_API_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

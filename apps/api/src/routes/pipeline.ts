@@ -7,6 +7,7 @@ import { renderVideo } from "@vectis/video";
 import { assemble } from "@vectis/assembly";
 import { publishToTikTok, publishToYouTube, refreshYouTubeToken } from "@vectis/publisher";
 import { ingestMetrics, ingestYouTubeMetrics, scoreTopics, getPerformanceContext } from "@vectis/analytics";
+import { pickClip, GAMEPLAY_TAGS } from "@vectis/gameplay";
 
 const log = createLogger("route:pipeline");
 
@@ -133,7 +134,41 @@ pipelineRoute.post("/render-video", async (c) => {
       .single();
 
     const niche = topic?.niche ?? "tech-explainer";
-    const video = await renderVideo(script, voiceAsset, niche);
+
+    // Pick a gameplay background clip (random tag, LRU within tag).
+    const randomTag =
+      GAMEPLAY_TAGS[Math.floor(Math.random() * GAMEPLAY_TAGS.length)];
+    const durationSec = Math.ceil((voiceAsset.duration_ms ?? 0) / 1000);
+    const pickedClip =
+      randomTag && durationSec > 0
+        ? await pickClip({ tag: randomTag, durationSec })
+        : null;
+
+    if (pickedClip) {
+      log.info(
+        {
+          tag: pickedClip.tag,
+          clipId: pickedClip.clipId,
+          startSec: pickedClip.startSec,
+        },
+        "using gameplay background",
+      );
+    } else {
+      log.info(
+        { tag: randomTag, durationSec },
+        "no gameplay background available",
+      );
+    }
+
+    const video = await renderVideo(script, voiceAsset, niche, {
+      backgroundClip: pickedClip
+        ? {
+            url: pickedClip.r2Url,
+            startSec: pickedClip.startSec,
+            durationSec: pickedClip.durationSec,
+          }
+        : null,
+    });
 
     await logStage(db, run_id, "render", "completed", { script_id, voice_asset_id }, { videoId: video.id, duration_ms: video.duration_ms });
 

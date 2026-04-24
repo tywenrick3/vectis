@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getDb, createLogger } from "@vectis/shared";
 import { renderVideo } from "@vectis/video";
+import { pickClip, GAMEPLAY_TAGS } from "@vectis/gameplay";
 
 const log = createLogger("route:render");
 
@@ -40,7 +41,37 @@ renderRoute.post("/", async (c) => {
 
     const niche = topic?.niche ?? "tech-explainer";
 
-    const video = await renderVideo(script, voiceAsset, niche);
+    // Pick a gameplay background clip (optional — null if pool is empty for this tag).
+    const randomTag =
+      GAMEPLAY_TAGS[Math.floor(Math.random() * GAMEPLAY_TAGS.length)];
+    const durationSec = Math.ceil((voiceAsset.duration_ms ?? 0) / 1000);
+    const backgroundClip =
+      randomTag && durationSec > 0
+        ? await pickClip({ tag: randomTag, durationSec })
+        : null;
+
+    if (backgroundClip) {
+      log.info(
+        {
+          tag: backgroundClip.tag,
+          clipId: backgroundClip.clipId,
+          startSec: backgroundClip.startSec,
+        },
+        "using gameplay background",
+      );
+    } else {
+      log.info({ tag: randomTag, durationSec }, "no gameplay background available");
+    }
+
+    const video = await renderVideo(script, voiceAsset, niche, {
+      backgroundClip: backgroundClip
+        ? {
+            url: backgroundClip.r2Url,
+            startSec: backgroundClip.startSec,
+            durationSec: backgroundClip.durationSec,
+          }
+        : null,
+    });
 
     await db
       .from("pipeline_runs")

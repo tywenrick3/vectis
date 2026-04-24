@@ -2,8 +2,8 @@ import React from "react";
 import {
   AbsoluteFill,
   Audio,
+  OffthreadVideo,
   Sequence,
-  staticFile,
   useCurrentFrame,
   useVideoConfig,
   interpolate,
@@ -24,33 +24,20 @@ interface NicheCompositionProps extends CompositionProps {
   disclaimer?: string;
 }
 
-// Music bed fades in over 0.5s and out over 1s, holds at 15% between.
-const MUSIC_BASE_VOLUME = 0.15;
-const MUSIC_FADE_IN_FRAMES = 15;
-const MUSIC_FADE_OUT_FRAMES = 30;
+const TEXT_SHADOW_STRONG =
+  "0 2px 6px rgba(0, 0, 0, 0.95), 0 6px 24px rgba(0, 0, 0, 0.75)";
 
 export const NicheComposition: React.FC<NicheCompositionProps> = ({
   script,
   voiceAsset,
   captionWords,
   hookOverride,
-  musicTrack,
   theme,
   disclaimer,
+  backgroundClip,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
-
-  const musicVolume = (f: number): number => {
-    if (f < MUSIC_FADE_IN_FRAMES) {
-      return (f / MUSIC_FADE_IN_FRAMES) * MUSIC_BASE_VOLUME;
-    }
-    const fadeOutStart = durationInFrames - MUSIC_FADE_OUT_FRAMES;
-    if (f > fadeOutStart) {
-      return Math.max(0, (durationInFrames - f) / MUSIC_FADE_OUT_FRAMES) * MUSIC_BASE_VOLUME;
-    }
-    return MUSIC_BASE_VOLUME;
-  };
+  const { fps } = useVideoConfig();
 
   const hookDurationFrames = 3 * fps;
   let currentFrame = hookDurationFrames;
@@ -68,17 +55,52 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
 
   return (
     <AbsoluteFill style={{ fontFamily: theme.fontFamily }}>
-      {/* Animated mesh-gradient background w/ grain + vignette */}
-      <BackgroundFX theme={theme} />
+      {backgroundClip ? (
+        <>
+          <AbsoluteFill>
+            <OffthreadVideo
+              src={backgroundClip.url}
+              startFrom={Math.round(backgroundClip.startSec * fps)}
+              muted
+            />
+          </AbsoluteFill>
+          {/* Top gradient band — protects progress bar + frames the panel chip */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              background:
+                "linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%)",
+              pointerEvents: "none",
+            }}
+          />
+          {/* Bottom gradient band — protects caption zone */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 560,
+              background:
+                "linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0) 100%)",
+              pointerEvents: "none",
+            }}
+          />
+        </>
+      ) : (
+        /* Fallback: mesh-gradient + grain + vignette when no gameplay clip available */
+        <BackgroundFX theme={theme} />
+      )}
 
       {/* Progress bar */}
       <ProgressBar color={theme.accentColor} />
 
       {/* Audio track */}
       {voiceAsset.audio_url && <Audio src={voiceAsset.audio_url} />}
-
-      {/* Background music bed */}
-      {musicTrack && <Audio src={staticFile(musicTrack)} volume={musicVolume} />}
 
       {/* Hook */}
       <Sequence durationInFrames={hookDurationFrames}>
@@ -93,13 +115,15 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
             <div
               style={{
                 color: "#fff",
-                fontSize: 60,
-                fontWeight: 800,
+                fontSize: 66,
+                fontWeight: 900,
                 textAlign: "center",
-                lineHeight: 1.3,
-                maxWidth: 900,
+                lineHeight: 1.25,
+                maxWidth: 920,
                 opacity: hookOpacity,
                 transform: `scale(${interpolate(hookScale, [0, 1], [0.85, 1])})`,
+                textShadow: TEXT_SHADOW_STRONG,
+                letterSpacing: -0.5,
               }}
             >
               {hookText}
@@ -130,6 +154,7 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
                 visualCue={segment.visual_cue}
                 narration={segment.narration}
                 accentColor={theme.accentColor}
+                panelBg={theme.panelBg}
                 durationInFrames={segmentFrames}
               />
             </SegmentTransition>
@@ -149,23 +174,37 @@ export const NicheComposition: React.FC<NicheCompositionProps> = ({
           >
             <div
               style={{
-                color: theme.accentColor,
-                fontSize: 54,
-                fontWeight: 800,
+                color: "#fff",
+                fontSize: 58,
+                fontWeight: 900,
                 textAlign: "center",
-                lineHeight: 1.3,
+                lineHeight: 1.25,
                 maxWidth: 900,
+                textShadow: TEXT_SHADOW_STRONG,
+                letterSpacing: -0.5,
               }}
             >
               {script.cta}
             </div>
+            {/* Accent underline bar */}
+            <div
+              style={{
+                width: 140,
+                height: 6,
+                backgroundColor: theme.accentColor,
+                borderRadius: 3,
+                marginTop: 28,
+                boxShadow: `0 0 18px ${theme.accentColor}aa`,
+              }}
+            />
             {disclaimer && (
               <div
                 style={{
-                  color: "#ffffff60",
+                  color: "#ffffffb0",
                   fontSize: 22,
-                  marginTop: 20,
+                  marginTop: 24,
                   textAlign: "center",
+                  textShadow: "0 2px 6px rgba(0, 0, 0, 0.85)",
                 }}
               >
                 {disclaimer}

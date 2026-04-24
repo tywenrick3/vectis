@@ -1,5 +1,6 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
+import { useCurrentFrame, interpolate } from "remotion";
+import { TEXT_SHADOW_BODY } from "./themes";
 
 interface Bar {
   label: string;
@@ -28,36 +29,37 @@ export const BarChart: React.FC<BarChartProps> = ({
   const titleOpacity = interpolate(frame, [0, 12], [0, 1], {
     extrapolateRight: "clamp",
   });
-  const titleY = interpolate(frame, [0, 12], [-20, 0], {
+  const titleY = interpolate(frame, [0, 12], [-14, 0], {
     extrapolateRight: "clamp",
   });
 
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "60px 50px",
-      }}
-    >
+    <div style={{ width: "100%", maxWidth: 820 }}>
       {/* Title */}
       <div
         style={{
-          color: "#ffffffdd",
-          fontSize: 36,
+          color: "#ffffff",
+          fontSize: 30,
           fontWeight: 700,
           fontFamily: "Inter, sans-serif",
-          marginBottom: 50,
+          marginBottom: 24,
           textAlign: "center",
           opacity: titleOpacity,
           transform: `translateY(${titleY}px)`,
+          textShadow: TEXT_SHADOW_BODY,
         }}
       >
         {title}
       </div>
 
       {/* Bars */}
-      <div style={{ width: "100%", maxWidth: 800, display: "flex", flexDirection: "column", gap: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
         {bars.map((bar, i) => {
           const staggerDelay = i * 6;
           const barGrowEnd = Math.min(durationInFrames * 0.6, 40) + staggerDelay;
@@ -86,42 +88,43 @@ export const BarChart: React.FC<BarChartProps> = ({
           const barColor = bar.color || accentColor;
 
           return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14 }}>
               {/* Label */}
               <div
                 style={{
-                  color: "#ffffffcc",
-                  fontSize: 26,
+                  color: "#ffffff",
+                  fontSize: 22,
                   fontWeight: 600,
                   fontFamily: "Inter, sans-serif",
-                  width: 160,
+                  width: 150,
                   textAlign: "right",
                   opacity: labelOpacity,
                   flexShrink: 0,
+                  textShadow: TEXT_SHADOW_BODY,
                 }}
               >
                 {bar.label}
               </div>
 
-              {/* Bar track */}
+              {/* Bar track (darker for gameplay contrast) */}
               <div
                 style={{
                   flex: 1,
-                  height: 40,
-                  backgroundColor: "#ffffff10",
+                  height: 32,
+                  backgroundColor: "rgba(0, 0, 0, 0.55)",
                   borderRadius: 8,
                   overflow: "hidden",
                   position: "relative",
+                  boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.5)",
                 }}
               >
-                {/* Bar fill */}
                 <div
                   style={{
                     width: `${barWidth}%`,
                     height: "100%",
-                    background: `linear-gradient(90deg, ${barColor}cc, ${barColor})`,
+                    background: `linear-gradient(90deg, ${barColor}dd, ${barColor})`,
                     borderRadius: 8,
-                    boxShadow: `0 0 20px ${barColor}40`,
+                    boxShadow: `0 0 16px ${barColor}50`,
                   }}
                 />
               </div>
@@ -130,12 +133,13 @@ export const BarChart: React.FC<BarChartProps> = ({
               <div
                 style={{
                   color: barColor,
-                  fontSize: 26,
-                  fontWeight: 700,
+                  fontSize: 22,
+                  fontWeight: 800,
                   fontFamily: "Inter, sans-serif",
-                  width: 100,
+                  width: 90,
                   opacity: valueOpacity,
                   flexShrink: 0,
+                  textShadow: TEXT_SHADOW_BODY,
                 }}
               >
                 {bar.value}{unit}
@@ -144,6 +148,6 @@ export const BarChart: React.FC<BarChartProps> = ({
           );
         })}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };

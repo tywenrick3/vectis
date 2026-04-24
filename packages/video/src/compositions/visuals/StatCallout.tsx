@@ -1,5 +1,6 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { TEXT_SHADOW_HERO, TEXT_SHADOW_BODY } from "./themes";
 
 interface StatCalloutProps {
   value: string;
@@ -15,13 +16,14 @@ const DirectionArrow: React.FC<{ direction: "up" | "down"; color: string }> = ({
 }) => (
   <span
     style={{
-      fontSize: 64,
+      fontSize: 56,
       color,
       marginRight: 12,
       lineHeight: 1,
+      textShadow: TEXT_SHADOW_HERO,
     }}
   >
-    {direction === "up" ? "\u25B2" : "\u25BC"}
+    {direction === "up" ? "▲" : "▼"}
   </span>
 );
 
@@ -53,7 +55,7 @@ export const StatCallout: React.FC<StatCalloutProps> = ({
   const glowPulse = interpolate(
     frame,
     [0, durationInFrames * 0.4, durationInFrames],
-    [0, 0.5, 0.25],
+    [0, 0.55, 0.3],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
@@ -63,31 +65,37 @@ export const StatCallout: React.FC<StatCalloutProps> = ({
   });
 
   const directionColor =
-    direction === "up" ? "#00ff88" : direction === "down" ? "#ff4466" : accentColor;
+    direction === "up" ? "#34d977" : direction === "down" ? "#ff5a6b" : accentColor;
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        justifyContent: "center",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        padding: 60,
       }}
     >
-      {/* Radial glow */}
+      {/* Radial glow behind number — acts as an ambient anchor on gameplay */}
       <div
         style={{
           position: "absolute",
-          width: 500,
-          height: 500,
+          width: 420,
+          height: 420,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${accentColor}35 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${accentColor}40 0%, transparent 68%)`,
           opacity: glowPulse,
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
         }}
       />
 
       {/* Value row */}
       <div
         style={{
+          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -102,11 +110,12 @@ export const StatCallout: React.FC<StatCalloutProps> = ({
         <div
           style={{
             color: accentColor,
-            fontSize: 108,
+            fontSize: 104,
             fontWeight: 900,
             fontFamily: "Inter, sans-serif",
             letterSpacing: -3,
             textAlign: "center",
+            textShadow: TEXT_SHADOW_HERO,
           }}
         >
           {value}
@@ -116,19 +125,22 @@ export const StatCallout: React.FC<StatCalloutProps> = ({
       {/* Label */}
       <div
         style={{
-          color: "#ffffffcc",
-          fontSize: 30,
-          fontWeight: 500,
+          position: "relative",
+          color: "#ffffff",
+          fontSize: 28,
+          fontWeight: 600,
           fontFamily: "Inter, sans-serif",
-          marginTop: 24,
+          marginTop: 16,
           opacity: labelOpacity,
           transform: `translateY(${labelY}px)`,
           textAlign: "center",
-          maxWidth: 700,
+          maxWidth: 780,
+          lineHeight: 1.35,
+          textShadow: TEXT_SHADOW_BODY,
         }}
       >
         {label}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };

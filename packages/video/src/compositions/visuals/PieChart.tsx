@@ -1,12 +1,7 @@
 import React from "react";
-import {
-  AbsoluteFill,
-  useCurrentFrame,
-  useVideoConfig,
-  interpolate,
-  spring,
-} from "remotion";
+import { useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
 import { makePie } from "@remotion/shapes";
+import { TEXT_SHADOW_HERO, TEXT_SHADOW_BODY } from "./themes";
 
 interface PieChartProps {
   title?: string;
@@ -29,8 +24,8 @@ export const PieChart: React.FC<PieChartProps> = ({
   const { fps } = useVideoConfig();
 
   const fillColor = color || accentColor;
-  const radius = 140;
-  const strokeWidth = 28;
+  const radius = 130;
+  const strokeWidth = 26;
   const innerRadius = radius - strokeWidth;
 
   // Animate progress from 0 to target value over 55% of duration
@@ -40,16 +35,11 @@ export const PieChart: React.FC<PieChartProps> = ({
     extrapolateRight: "clamp",
   });
 
-  // Pie path for the filled arc
   const pie = makePie({ radius, progress, closePath: false });
-
-  // Background track (full circle)
   const track = makePie({ radius, progress: 0.999, closePath: false });
 
-  // Center percentage counts up in sync with the arc
   const displayPercent = Math.round(progress * 100);
 
-  // Scale bounce when fill completes
   const bounceSpring = spring({
     frame: frame - fillEnd,
     fps,
@@ -57,15 +47,13 @@ export const PieChart: React.FC<PieChartProps> = ({
   });
   const percentScale = frame >= fillEnd ? 1 + (bounceSpring - 1) * 0.1 : 1;
 
-  // Title fade-in
   const titleOpacity = interpolate(frame, [0, 10], [0, 1], {
     extrapolateRight: "clamp",
   });
-  const titleY = interpolate(frame, [0, 10], [-15, 0], {
+  const titleY = interpolate(frame, [0, 10], [-12, 0], {
     extrapolateRight: "clamp",
   });
 
-  // Label fade-in after fill
   const labelOpacity = interpolate(frame, [fillEnd, fillEnd + 12], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -75,11 +63,10 @@ export const PieChart: React.FC<PieChartProps> = ({
     extrapolateRight: "clamp",
   });
 
-  // Glow pulse behind the chart
   const glowOpacity = interpolate(
     frame,
     [fillEnd, fillEnd + 10, durationInFrames],
-    [0, 0.4, 0.2],
+    [0, 0.5, 0.25],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
@@ -87,25 +74,26 @@ export const PieChart: React.FC<PieChartProps> = ({
   const viewBox = `${-strokeWidth / 2} ${-strokeWidth / 2} ${svgSize} ${svgSize}`;
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        justifyContent: "center",
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        padding: 60,
       }}
     >
       {/* Title */}
       {title && (
         <div
           style={{
-            color: "#ffffffdd",
-            fontSize: 34,
+            color: "#ffffff",
+            fontSize: 30,
             fontWeight: 700,
             fontFamily: "Inter, sans-serif",
-            marginBottom: 36,
+            marginBottom: 22,
             textAlign: "center",
             opacity: titleOpacity,
             transform: `translateY(${titleY}px)`,
+            textShadow: TEXT_SHADOW_BODY,
           }}
         >
           {title}
@@ -120,17 +108,17 @@ export const PieChart: React.FC<PieChartProps> = ({
             position: "absolute",
             inset: -40,
             borderRadius: "50%",
-            background: `radial-gradient(circle, ${fillColor}30 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${fillColor}40 0%, transparent 70%)`,
             opacity: glowOpacity,
           }}
         />
 
         <svg width={svgSize} height={svgSize} viewBox={viewBox}>
-          {/* Background track */}
+          {/* Background track (darker so it reads on bright gameplay) */}
           <path
             d={track.path}
             fill="none"
-            stroke="#ffffff12"
+            stroke="rgba(0, 0, 0, 0.45)"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
           />
@@ -144,13 +132,13 @@ export const PieChart: React.FC<PieChartProps> = ({
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               style={{
-                filter: `drop-shadow(0 0 12px ${fillColor}60)`,
+                filter: `drop-shadow(0 0 14px ${fillColor}80)`,
               }}
             />
           )}
         </svg>
 
-        {/* Center donut hole + percentage */}
+        {/* Center percentage */}
         <div
           style={{
             position: "absolute",
@@ -173,11 +161,12 @@ export const PieChart: React.FC<PieChartProps> = ({
             <span
               style={{
                 color: fillColor,
-                fontSize: 72,
+                fontSize: 68,
                 fontWeight: 900,
                 fontFamily: "Inter, sans-serif",
                 letterSpacing: -2,
                 transform: `scale(${percentScale})`,
+                textShadow: TEXT_SHADOW_HERO,
               }}
             >
               {displayPercent}%
@@ -189,19 +178,21 @@ export const PieChart: React.FC<PieChartProps> = ({
       {/* Label */}
       <div
         style={{
-          color: "#ffffffcc",
-          fontSize: 28,
-          fontWeight: 500,
+          color: "#ffffff",
+          fontSize: 26,
+          fontWeight: 600,
           fontFamily: "Inter, sans-serif",
-          marginTop: 32,
+          marginTop: 22,
           textAlign: "center",
-          maxWidth: 700,
+          maxWidth: 780,
+          lineHeight: 1.35,
           opacity: labelOpacity,
           transform: `translateY(${labelY}px)`,
+          textShadow: TEXT_SHADOW_BODY,
         }}
       >
         {label}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
